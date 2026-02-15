@@ -1,6 +1,6 @@
 # Agent Relay System
 
-Cursor/VS Code 内で完結する、複数の Claude Code セッションが YAML ファイルを介して自律的に連携するシステム。
+Cursor/VS Code 内で完結する、複数の Claude Code セッションが YAML ファイルを介して連携するシステム。
 
 ---
 
@@ -72,11 +72,11 @@ relay-init
 ```
 
 ターミナル数を選択：
-- 2: Flat (Member_1 + Member_2)
-- 3: Leader + 2 Members
-- 4: Full hierarchy (Officer + Leader + 2 Members)
-- 5: Officer + Leader + 3 Members
-- 6: Officer + Leader + 4 Members
+- 2: Leader + 1 Member
+- 3: Leader + 2 Members（デフォルト）
+- 4: Leader + 3 Members
+- 5: Leader + 4 Members
+- 6: Leader + 5 Members
 
 ### 初期化（非対話モード）
 
@@ -107,15 +107,33 @@ project/
 2. 各ペインで Claude Code を起動：
 
 ```bash
-claude --model opus    # Officer, Leader（複雑な判断用）
-claude --model sonnet  # Member（実装作業用）
+claude --model sonnet  # Leader（コーディネーター）
+claude --model haiku   # Member（実装作業用）
 ```
 
 3. 各 Claude Code に指示書を読み込ませる：
 
 ```
-instructions/member_1.md を読んでください。あなたは member_1 です。
+instructions/leader.md を読んでください。あなたは Leader です。
 ```
+
+---
+
+## 役割構成
+
+### Leader
+
+- ユーザーからのリクエストを受け取る
+- タスクを Member に割り当てる
+- Member の成果を統合して報告
+- **実作業は行わず、待機状態を保つ**
+
+### Member
+
+- Leader からタスクを受け取り実装
+- テストを書いて実行
+- 完了したら報告
+- **ユーザーの指示が最優先**
 
 ---
 
@@ -149,6 +167,18 @@ instructions/member_1.md を読んでください。あなたは member_1 です
 
 ---
 
+## Extension API
+
+| エンドポイント | 説明 |
+|--------------|------|
+| `GET /` | サーバー状態確認 |
+| `GET /list` | ターミナル一覧を取得 |
+| `GET /identify` | 各ターミナルにインデックスを表示 |
+| `GET /notify?terminal=N&message=MSG` | ターミナルに通知 |
+| `GET /send?terminal=N&text=TEXT` | ターミナルにテキスト送信 |
+
+---
+
 ## トラブルシューティング
 
 ### `relay-init: command not found`
@@ -164,6 +194,8 @@ Extension がインストールされていないか、起動していません�
 ```bash
 code --install-extension terminal-relay-0.0.1.vsix
 ```
+
+Cursor の場合、Developer: Reload Window で再読み込みしてください。
 
 ### `fswatch: command not found`
 

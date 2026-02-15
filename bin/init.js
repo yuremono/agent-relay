@@ -58,13 +58,13 @@ function log(color, message) {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 
-// Preset configurations
+// Preset configurations (2-layer: Leader + Members)
 const presets = {
-  2: { roles: ['member_1', 'member_2'], description: 'Flat (Member_1 + Member_2)' },
+  2: { roles: ['leader', 'member_1'], description: 'Leader + 1 Member' },
   3: { roles: ['leader', 'member_1', 'member_2'], description: 'Leader + 2 Members' },
-  4: { roles: ['officer', 'leader', 'member_1', 'member_2'], description: 'Full hierarchy (Officer + Leader + 2 Members)' },
-  5: { roles: ['officer', 'leader', 'member_1', 'member_2', 'member_3'], description: 'Officer + Leader + 3 Members' },
-  6: { roles: ['officer', 'leader', 'member_1', 'member_2', 'member_3', 'member_4'], description: 'Officer + Leader + 4 Members' }
+  4: { roles: ['leader', 'member_1', 'member_2', 'member_3'], description: 'Leader + 3 Members' },
+  5: { roles: ['leader', 'member_1', 'member_2', 'member_3', 'member_4'], description: 'Leader + 4 Members' },
+  6: { roles: ['leader', 'member_1', 'member_2', 'member_3', 'member_4', 'member_5'], description: 'Leader + 5 Members' }
 };
 
 // Get the directory where this script is located
@@ -240,24 +240,18 @@ function generateRoleFiles() {
     }
   });
 
-  // Generate to/from files
+  // Generate to/from files (all roles have to/from)
   config.roles.forEach(role => {
-    // to/ files (except officer who doesn't receive tasks)
-    if (role !== 'officer') {
-      const toFile = path.join(toDir, `${role}.yaml`);
-      if (!fs.existsSync(toFile)) {
-        fs.writeFileSync(toFile, `# Messages for ${role}\nmessages:\n`);
-        log('green', `  Created: ${toFile}`);
-      }
+    const toFile = path.join(toDir, `${role}.yaml`);
+    if (!fs.existsSync(toFile)) {
+      fs.writeFileSync(toFile, `# Messages for ${role}\nmessages:\n`);
+      log('green', `  Created: ${toFile}`);
     }
 
-    // from/ files (except officer who doesn't report)
-    if (role !== 'officer') {
-      const fromFile = path.join(fromDir, `${role}.yaml`);
-      if (!fs.existsSync(fromFile)) {
-        fs.writeFileSync(fromFile, `# Reports from ${role}\nmessages:\n`);
-        log('green', `  Created: ${fromFile}`);
-      }
+    const fromFile = path.join(fromDir, `${role}.yaml`);
+    if (!fs.existsSync(fromFile)) {
+      fs.writeFileSync(fromFile, `# Reports from ${role}\nmessages:\n`);
+      log('green', `  Created: ${fromFile}`);
     }
   });
 
@@ -282,7 +276,6 @@ function generateRoleFiles() {
 }
 
 function generateInstructionTemplate(role) {
-  const isOfficer = role === 'officer';
   const isLeader = role === 'leader';
   const isMember = role.startsWith('member_');
 
@@ -291,12 +284,9 @@ function generateInstructionTemplate(role) {
   template += `## ターミナル位置\n\n`;
   template += `- ペインインデックス: ${config.roles.indexOf(role)}\n\n`;
 
-  if (isOfficer) {
-    template += `## 役割\n\n- ユーザー（人間）からリクエストを受け取る\n- タスクを Leader に割り当てる\n- 最終統合とユーザーへの報告\n\n`;
-    template += `## 通信方法\n\n### Leader への送信\n\`\`\`bash\n./scripts/to_write.sh relay/to/leader.yaml ${role} "タスク内容" task\n./scripts/inbox_write.sh relay/inbox/leader.yaml ${role} new_task relay/to/leader.yaml "タスク通知"\n\`\`\`\n`;
-  } else if (isLeader) {
-    template += `## 役割\n\n- タスクをサブタスクに分解\n- Members に割り当て\n- 成果を統合して Officer に報告\n\n`;
-    template += `## 通信方法\n\n### Member への送信\n\`\`\`bash\n./scripts/to_write.sh relay/to/member_1.yaml ${role} "サブタスク" task\n./scripts/inbox_write.sh relay/inbox/member_1.yaml ${role} subtask relay/to/member_1.yaml "通知"\n\`\`\`\n\n### Officer への報告\n\`\`\`bash\n./scripts/from_write.sh relay/from/leader.yaml completed "完了報告"\n./scripts/inbox_write.sh relay/inbox/officer.yaml ${role} report relay/from/leader.yaml "完了"\n\`\`\`\n`;
+  if (isLeader) {
+    template += `## 役割\n\n- ユーザー（人間）からリクエストを受け取る\n- タスクをサブタスクに分解して Members に割り当て\n- 成果を統合してユーザーに報告\n\n`;
+    template += `## 通信方法\n\n### Member への送信\n\`\`\`bash\n./scripts/to_write.sh relay/to/member_1.yaml ${role} "サブタスク" task\n./scripts/inbox_write.sh relay/inbox/member_1.yaml ${role} subtask relay/to/member_1.yaml "通知"\n\`\`\`\n\n### Member からの受信\n\`\`\`bash\ncat relay/inbox/leader.yaml\ncat relay/from/member_1.yaml\n\`\`\`\n`;
   } else {
     template += `## 役割\n\n- 実装・テスト実行\n- Leader に進捗報告\n\n`;
     template += `## 通信方法\n\n### Leader への報告\n\`\`\`bash\n./scripts/from_write.sh relay/from/${role}.yaml completed "完了報告"\n./scripts/inbox_write.sh relay/inbox/leader.yaml ${role} report relay/from/${role}.yaml "完了"\n\`\`\`\n`;
@@ -357,7 +347,7 @@ function printNextSteps() {
 
   log('blue', `${config.autoSplit ? '3' : '3'}. Start Claude Code in each pane:`);
   config.roles.forEach((role, i) => {
-    const model = role === 'officer' || role === 'leader' ? 'opus' : 'sonnet';
+    const model = role === 'leader' ? 'sonnet' : 'haiku';
     log('blue', `   Pane ${i}: claude --model ${model}    # ${role}`);
   });
   log('blue', '');

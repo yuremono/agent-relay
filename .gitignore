@@ -3,11 +3,7 @@ node_modules/
 extension/node_modules/
 
 # Generated files (not for distribution) - root directory only
-/relay/
 /instructions/
-/logs/
-/.watcher_pids
-/.relay-config.json
 
 # OS files
 .DS_Store
@@ -23,3 +19,7 @@ Thumbs.db
 
 # Development files
 *.log
+
+MAS_samples/
+MULTIAGENT_PLANNING.md
+NOTE.md
