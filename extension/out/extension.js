@@ -129,8 +129,12 @@ function startServer() {
             res.end(`OK: Setting up ${count} terminals with roles: ${roles.join(', ')}`);
         }
         else if (url.pathname === '/list') {
-            listTerminals();
-            res.end(`OK: Listed ${vscode.window.terminals.length} terminals`);
+            const terminalInfo = listTerminals();
+            res.end(terminalInfo);
+        }
+        else if (url.pathname === '/identify') {
+            identifyTerminals();
+            res.end(`OK: Sent identity to ${vscode.window.terminals.length} terminals`);
         }
         else if (url.pathname === '/config') {
             const count = parseInt(url.searchParams.get('count') || '3', 10);
@@ -354,9 +358,24 @@ async function setupTerminals(count, roles) {
 function listTerminals() {
     const terminals = vscode.window.terminals;
     outputChannel.appendLine(`=== Terminal List (${terminals.length}) ===`);
+    const lines = [`Terminals: ${terminals.length}`];
     terminals.forEach((t, i) => {
-        outputChannel.appendLine(`  [${i}] ${t.name}`);
+        const line = `  [${i}] ${t.name}`;
+        outputChannel.appendLine(line);
+        lines.push(line);
     });
     vscode.window.showInformationMessage(`Terminal Relay: ${terminals.length} terminals available`);
+    return lines.join('\n');
+}
+function identifyTerminals() {
+    const terminals = vscode.window.terminals;
+    outputChannel.appendLine(`Identifying ${terminals.length} terminals...`);
+    terminals.forEach((t, i) => {
+        // Send identity message to each terminal
+        t.sendText(`\n=== Terminal Index: ${i} ===\n`, false);
+        t.sendText(`echo "You are at terminal index ${i}"\n`, true);
+        outputChannel.appendLine(`Sent identity to terminal ${i}: ${t.name}`);
+    });
+    vscode.window.showInformationMessage(`Terminal Relay: Sent identity to ${terminals.length} terminals`);
 }
 //# sourceMappingURL=extension.js.map
