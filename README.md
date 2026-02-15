@@ -4,22 +4,54 @@ Cursor/VS Code 内で完結する、複数の Claude Code セッションが YAM
 
 ---
 
-## 目次
+## クイックスタート
 
-1. [前提条件](#前提条件)
-2. [インストール](#インストール)
-3. [VS Code Extension のインストール](#vs-code-extension-のインストール)
-4. [新規プロジェクトでの使用方法](#新規プロジェクトでの使用方法)
-5. [システムの起動](#システムの起動)
-6. [Claude Code の起動と設定](#claude-code-の起動と設定)
-7. [エージェント間の通信方法](#エージェント間の通信方法)
-8. [トラブルシューティング](#トラブルシューティング)
+### 1. インストール
+
+```bash
+npm install -g https://github.com/yuremono/agent-relay.git
+```
+
+### 2. プロジェクトで初期化
+
+Cursor/VS Code でプロジェクトディレクトリを開き、ターミナルで実行：
+
+```bash
+relay-init
+```
+
+### 3. Extension をインストール
+
+生成された VSIX ファイルをインストール：
+
+```bash
+code --install-extension terminal-relay-0.0.1.vsix
+```
+
+または Cursor で：
+- `Cmd+Shift+P` → `Extensions: Install from VSIX...`
+- `terminal-relay-0.0.1.vsix` を選択
+
+### 4. VS Code/Cursor を再読み込み
+
+`Cmd+Shift+P` → `Developer: Reload Window`
+
+### 5. 動作確認
+
+```bash
+curl http://localhost:3773
+# => "Terminal Relay is running..." と表示されればOK
+```
+
+### 6. システム起動
+
+```bash
+relay-start
+```
 
 ---
 
 ## 前提条件
-
-以下がインストールされている必要があります：
 
 | ソフトウェア | 確認コマンド | インストール方法 |
 |-------------|-------------|-----------------|
@@ -29,105 +61,24 @@ Cursor/VS Code 内で完結する、複数の Claude Code セッションが YAM
 | VS Code または Cursor | - | 公式サイトからダウンロード |
 | Claude Code CLI | `claude --version` | [claude.ai](https://claude.ai/) |
 
-### fswatch のインストール（macOS）
-
-```bash
-brew install fswatch
-```
-
 ---
 
-## インストール
+## 使用方法
 
-### GitHub からインストール
-
-```bash
-# グローバルインストール
-npm install -g https://github.com/yuremono/agent-relay.git
-```
-
-### または、リポジトリをクローンしてインストール
-
-```bash
-# リポジトリをクローン
-git clone https://github.com/yuremono/agent-relay.git
-cd agent-relay
-
-# 依存関係をインストール
-npm install
-
-# グローバルコマンドとして登録
-npm link
-```
-
-### 確認
-
-```bash
-relay-init --help
-```
-
----
-
-## VS Code Extension のインストール
-
-このシステムには、ターミナル間の通信を補助する VS Code Extension が含まれています。
-
-### インストール手順
-
-1. プロジェクトディレクトリで初期化を実行：
-   ```bash
-   relay-init
-   ```
-
-2. 生成された VSIX ファイルをインストール：
-   ```bash
-   code --install-extension terminal-relay-0.0.1.vsix
-   ```
-
-   または VS Code/Cursor で：
-   - `Cmd+Shift+P` → `Extensions: Install from VSIX...`
-   - `terminal-relay-0.0.1.vsix` を選択
-
-3. VS Code/Cursor を再読み込み：
-   - `Cmd+Shift+P` → `Developer: Reload Window`
-
-### 動作確認
-
-```bash
-curl http://localhost:3773
-# => "Terminal Relay is running..." と表示されればOK
-```
-
----
-
-## 新規プロジェクトでの使用方法
-
-### プロジェクト初期化
-
-1. プロジェクト用のディレクトリを作成
-2. Cursor/VS Code でそのディレクトリを開く（`File` → `Open Folder`）
-3. ターミナルを開いて初期化を実行：
+### 初期化（対話モード）
 
 ```bash
 relay-init
 ```
 
-### 対話モードのフロー
+ターミナル数を選択：
+- 2: Flat (Member_1 + Member_2)
+- 3: Leader + 2 Members
+- 4: Full hierarchy (Officer + Leader + 2 Members)
+- 5: Officer + Leader + 3 Members
+- 6: Officer + Leader + 4 Members
 
-```
-=== Configuration ===
-
-Available configurations:
-  2 terminals: Flat (Member_1 + Member_2)
-  3 terminals: Leader + 2 Members
-  4 terminals: Full hierarchy (Officer + Leader + 2 Members)
-  5 terminals: Officer + Leader + 3 Members
-  6 terminals: Officer + Leader + 4 Members
-
-Number of terminals [2-6] (default: 3): _
-```
-
-### 非対話モード
+### 初期化（非対話モード）
 
 ```bash
 relay-init -y
@@ -136,55 +87,31 @@ relay-init -y
 ### 生成されるファイル
 
 ```
-my-project/
-├── .relay-config.json      # 設定ファイル
+project/
+├── .relay-config.json         # 設定ファイル
 ├── terminal-relay-0.0.1.vsix  # Extension
 ├── relay/
-│   ├── inbox/              # 通知ファイル
-│   ├── to/                 # タスク指示
-│   ├── from/               # 報告
-│   ├── archive/            # アーカイブ
-│   └── reports/            # 詳細報告
-├── instructions/           # エージェント指示書
-├── logs/                   # ログ
-└── scripts/                # 通信スクリプト
+│   ├── inbox/                 # 通知ファイル
+│   ├── to/                    # タスク指示
+│   ├── from/                  # 報告
+│   ├── archive/               # アーカイブ
+│   └── reports/               # 詳細報告
+├── instructions/              # エージェント指示書
+├── logs/                      # ログ
+└── scripts/                   # 通信スクリプト
 ```
 
----
+### Claude Code の起動
 
-## システムの起動
-
-```bash
-relay-start
-```
-
-### 停止方法
-
-- `Ctrl+C`
-- または `pkill -f fswatch`
-
----
-
-## Claude Code の起動と設定
-
-### ターミナルを分割
-
-- `Cmd+\`（macOS）または `Ctrl+\`（Windows）
-- または `Terminal` → `Split Terminal`
-
-### Claude Code を起動
-
-各ペインで対応する役割の Claude Code を起動：
+1. ターミナルを分割：`Cmd+\`（macOS）
+2. 各ペインで Claude Code を起動：
 
 ```bash
-# 役割に応じてモデルを選択
 claude --model opus    # Officer, Leader（複雑な判断用）
 claude --model sonnet  # Member（実装作業用）
 ```
 
-### 指示書を読み込ませる
-
-各 Claude Code に：
+3. 各 Claude Code に指示書を読み込ませる：
 
 ```
 instructions/member_1.md を読んでください。あなたは member_1 です。
@@ -192,7 +119,7 @@ instructions/member_1.md を読んでください。あなたは member_1 です
 
 ---
 
-## エージェント間の通信方法
+## エージェント間の通信
 
 ### タスクを送る
 
@@ -248,11 +175,19 @@ brew install fswatch
 
 1. `relay-start` が実行中か確認
 2. `ps aux | grep fswatch` で監視プロセスを確認
-3. `cat logs/watcher.log` でログを確認
 
 ---
 
 ## 開発者向け情報
+
+### リポジトリをクローンして開発
+
+```bash
+git clone https://github.com/yuremono/agent-relay.git
+cd agent-relay
+npm install
+npm link
+```
 
 ### Extension の再ビルド
 
@@ -261,12 +196,6 @@ cd extension
 npm install
 npm run compile
 npx vsce package --allow-missing-repository
-```
-
-### テスト実行
-
-```bash
-node bin/init.js --dry-run --non-interactive
 ```
 
 ---
