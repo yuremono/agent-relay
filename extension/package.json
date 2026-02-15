@@ -1,0 +1,42 @@
+{
+  "name": "terminal-relay",
+  "displayName": "Terminal Relay",
+  "description": "Terminal communication relay for multi-agent system",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "terminal-relay.startServer",
+        "title": "Terminal Relay: Start Server"
+      },
+      {
+        "command": "terminal-relay.stopServer",
+        "title": "Terminal Relay: Stop Server"
+      },
+      {
+        "command": "terminal-relay.testFocus",
+        "title": "Terminal Relay: Test Focus (Terminal 0)"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  }
+}

@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+extension/node_modules/
+
+# Generated files (not for distribution)
+relay/
+instructions/
+logs/
+.watcher_pids
+.relay-config.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Lock files (optional - uncomment if you want to exclude)
+# package-lock.json
+
+# Development files
+*.log
