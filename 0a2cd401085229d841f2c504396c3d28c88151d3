@@ -1,0 +1,23 @@
+extension/src/extension.ts
+  c24a015ea82f3d1b 113-117,371,375,377-379,383-397
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.3",
+  "base_commit_sha": "0a2cd401085229d841f2c504396c3d28c88151d3",
+  "prompts": {
+    "c24a015ea82f3d1b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c6a59093-54f0-4bd8-b1df-b9c959cd820c",
+        "model": "glm-5"
+      },
+      "human_author": "yuremono <5alviaofficinali50@gmail.com>",
+      "messages": [],
+      "total_additions": 25,
+      "total_deletions": 4,
+      "accepted_lines": 25,
+      "overriden_lines": 0
+    }
+  }
+}
