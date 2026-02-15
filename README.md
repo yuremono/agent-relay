@@ -74,9 +74,8 @@ relay-init --help
 
 ### インストール手順
 
-1. プロジェクトで初期化を実行：
+1. プロジェクトディレクトリで初期化を実行：
    ```bash
-   mkdir my-project && cd my-project
    relay-init
    ```
 
@@ -105,12 +104,11 @@ curl http://localhost:3773
 
 ### プロジェクト初期化
 
-```bash
-# プロジェクトディレクトリを作成
-mkdir my-project
-cd my-project
+1. プロジェクト用のディレクトリを作成
+2. Cursor/VS Code でそのディレクトリを開く（`File` → `Open Folder`）
+3. ターミナルを開いて初期化を実行：
 
-# 初期化（対話モード）
+```bash
 relay-init
 ```
 
