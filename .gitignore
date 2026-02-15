@@ -2,12 +2,12 @@
 node_modules/
 extension/node_modules/
 
-# Generated files (not for distribution)
-relay/
-instructions/
-logs/
-.watcher_pids
-.relay-config.json
+# Generated files (not for distribution) - root directory only
+/relay/
+/instructions/
+/logs/
+/.watcher_pids
+/.relay-config.json
 
 # OS files
 .DS_Store
