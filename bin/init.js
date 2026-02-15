@@ -218,8 +218,20 @@ function generateRoleFiles() {
     return;
   }
 
-  // Generate inbox files for each role
+  // Ensure all required directories exist
   const inboxDir = path.join(targetDir, 'relay', 'inbox');
+  const toDir = path.join(targetDir, 'relay', 'to');
+  const fromDir = path.join(targetDir, 'relay', 'from');
+  const instructionsDir = path.join(targetDir, 'instructions');
+
+  [inboxDir, toDir, fromDir, instructionsDir].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      log('green', `  Created directory: ${dir}`);
+    }
+  });
+
+  // Generate inbox files for each role
   config.roles.forEach(role => {
     const inboxFile = path.join(inboxDir, `${role}.yaml`);
     if (!fs.existsSync(inboxFile)) {
@@ -229,9 +241,6 @@ function generateRoleFiles() {
   });
 
   // Generate to/from files
-  const toDir = path.join(targetDir, 'relay', 'to');
-  const fromDir = path.join(targetDir, 'relay', 'from');
-
   config.roles.forEach(role => {
     // to/ files (except officer who doesn't receive tasks)
     if (role !== 'officer') {
@@ -253,7 +262,6 @@ function generateRoleFiles() {
   });
 
   // Generate instruction files
-  const instructionsDir = path.join(targetDir, 'instructions');
   config.roles.forEach(role => {
     const instructionFile = path.join(instructionsDir, `${role}.md`);
     if (!fs.existsSync(instructionFile)) {
