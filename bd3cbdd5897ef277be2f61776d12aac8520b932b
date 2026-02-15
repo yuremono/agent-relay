@@ -1,0 +1,23 @@
+bin/init.js
+  c24a015ea82f3d1b 221,223-234
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.3",
+  "base_commit_sha": "bd3cbdd5897ef277be2f61776d12aac8520b932b",
+  "prompts": {
+    "c24a015ea82f3d1b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c6a59093-54f0-4bd8-b1df-b9c959cd820c",
+        "model": "glm-5"
+      },
+      "human_author": "yuremono <5alviaofficinali50@gmail.com>",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 5,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    }
+  }
+}
