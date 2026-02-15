@@ -59,12 +59,13 @@ function log(color, message) {
 }
 
 // Preset configurations (2-layer: Leader + Members)
+// Note: Roles are just placeholders - actual roles are assigned when instructing Claude Code
 const presets = {
-  2: { roles: ['leader', 'member_1'], description: 'Leader + 1 Member' },
-  3: { roles: ['leader', 'member_1', 'member_2'], description: 'Leader + 2 Members' },
-  4: { roles: ['leader', 'member_1', 'member_2', 'member_3'], description: 'Leader + 3 Members' },
-  5: { roles: ['leader', 'member_1', 'member_2', 'member_3', 'member_4'], description: 'Leader + 4 Members' },
-  6: { roles: ['leader', 'member_1', 'member_2', 'member_3', 'member_4', 'member_5'], description: 'Leader + 5 Members' }
+  2: { roles: ['agent_1', 'agent_2'], description: '2 terminals' },
+  3: { roles: ['agent_1', 'agent_2', 'agent_3'], description: '3 terminals' },
+  4: { roles: ['agent_1', 'agent_2', 'agent_3', 'agent_4'], description: '4 terminals' },
+  5: { roles: ['agent_1', 'agent_2', 'agent_3', 'agent_4', 'agent_5'], description: '5 terminals' },
+  6: { roles: ['agent_1', 'agent_2', 'agent_3', 'agent_4', 'agent_5', 'agent_6'], description: '6 terminals' }
 };
 
 // Get the directory where this script is located
@@ -347,15 +348,19 @@ function printNextSteps() {
 
   log('blue', `${config.autoSplit ? '3' : '3'}. Start Claude Code in each pane:`);
   config.roles.forEach((role, i) => {
-    const model = role === 'leader' ? 'sonnet' : 'haiku';
-    log('blue', `   Pane ${i}: claude --model ${model}    # ${role}`);
+    const model = i === 0 ? 'sonnet' : 'haiku';  // First pane: sonnet, others: haiku
+    log('blue', `   Pane ${i}: claude --model ${model}`);
   });
   log('blue', '');
 
-  log('blue', '4. Each agent reads its instruction file:');
-  config.roles.forEach(role => {
-    log('blue', `   ${role}: instructions/${role}.md`);
-  });
+  log('blue', '4. Check terminal index:');
+  log('blue', '   curl "http://localhost:3773/identify"');
+  log('blue', '');
+
+  log('blue', '5. Instruct each Claude Code:');
+  log('blue', '   "instructions/leader.md (or member.md) を読んでください。');
+  log('blue', '    あなたのターミナルインデックスは N です。"');
+  log('blue', '');
   log('blue', '');
 
   log('blue', '5. Communication commands:');

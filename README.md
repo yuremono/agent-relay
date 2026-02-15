@@ -1,6 +1,18 @@
-# Agent Relay System
+# Agent-Relay
 
 Cursor/VS Code 内で完結する、複数の Claude Code セッションが YAML ファイルを介して連携するシステム。
+
+---
+
+## 前提条件
+
+| ソフトウェア | 確認コマンド | インストール方法 |
+|-------------|-------------|-----------------|
+| Node.js (v18以上) | `node --version` | [nodejs.org](https://nodejs.org/) |
+| npm | `npm --version` | Node.jsに同梱 |
+| fswatch (macOS) | `which fswatch` | `brew install fswatch` |
+| VS Code または Cursor | - | 公式サイトからダウンロード |
+| Claude Code CLI | `claude --version` | [claude.ai](https://claude.ai/) |
 
 ---
 
@@ -25,10 +37,14 @@ relay-init
 生成された VSIX ファイルをインストール：
 
 ```bash
+# VS Code の場合
 code --install-extension terminal-relay-0.0.1.vsix
+
+# Cursor の場合
+cursor --install-extension terminal-relay-0.0.1.vsix
 ```
 
-または Cursor で：
+または Extensions パネルで：
 - `Cmd+Shift+P` → `Extensions: Install from VSIX...`
 - `terminal-relay-0.0.1.vsix` を選択
 
@@ -51,18 +67,6 @@ relay-start
 
 ---
 
-## 前提条件
-
-| ソフトウェア | 確認コマンド | インストール方法 |
-|-------------|-------------|-----------------|
-| Node.js (v18以上) | `node --version` | [nodejs.org](https://nodejs.org/) |
-| npm | `npm --version` | Node.jsに同梱 |
-| fswatch (macOS) | `which fswatch` | `brew install fswatch` |
-| VS Code または Cursor | - | 公式サイトからダウンロード |
-| Claude Code CLI | `claude --version` | [claude.ai](https://claude.ai/) |
-
----
-
 ## 使用方法
 
 ### 初期化（対話モード）
@@ -71,12 +75,9 @@ relay-start
 relay-init
 ```
 
-ターミナル数を選択：
-- 2: Leader + 1 Member
-- 3: Leader + 2 Members（デフォルト）
-- 4: Leader + 3 Members
-- 5: Leader + 4 Members
-- 6: Leader + 5 Members
+ターミナル数を選択：2〜6
+
+※ 役割は各ペインで Claude Code に指示する際に決定します。
 
 ### 初期化（非対話モード）
 
@@ -101,36 +102,61 @@ project/
 └── scripts/                   # 通信スクリプト
 ```
 
-### Claude Code の起動
+### ターミナルの準備
 
-1. ターミナルを分割：`Cmd+\`（macOS）
-2. 各ペインで Claude Code を起動：
+#### 方法1: ターミナル分割
+
+- **VS Code/Cursor**: `Cmd+\`（macOS）または `Ctrl+\`（Windows/Linux）
+  - ※ 日本語キーボードでバックスラッシュを入力: `Option(Alt) + ¥`
+
+- **代替方法**: メニューから `Terminal > Split Terminal`
+
+#### 方法2: Extension による自動分割
 
 ```bash
-claude --model sonnet  # Leader（コーディネーター）
-claude --model haiku   # Member（実装作業用）
+curl "http://localhost:3773/setup?count=3"
 ```
 
-3. 各 Claude Code に指示書を読み込ませる：
+### ターミナルインデックスの確認（重要）
+
+各ペインのインデックスを確認します：
+
+```bash
+curl "http://localhost:3773/identify"
+```
+
+各ターミナルに `You are at terminal index N` と表示されます。
+
+### Claude Code の起動
+
+1. 各ペインで Claude Code を起動：
+
+```bash
+claude --model sonnet  # 思考・タスク分配担当
+claude --model haiku   # タスク実行担当
+```
+
+2. 各 Claude Code に指示書とターミナルインデックスを伝えます：
 
 ```
-instructions/leader.md を読んでください。あなたは Leader です。
+instructions/leader.md を読んでください。
+あなたのターミナルインデックスは 0 です。
 ```
 
 ---
 
 ## 役割構成
 
-### Leader
+### 思考・タスク分配担当
 
 - ユーザーからのリクエストを受け取る
-- タスクを Member に割り当てる
-- Member の成果を統合して報告
+- タスクを分割して実行担当に割り当てる
+- 成果を統合して報告
 - **実作業は行わず、待機状態を保つ**
 
-### Member
+### タスク実行担当
 
-- Leader からタスクを受け取り実装
+- タスクを受け取り実装
 - テストを書いて実行
 - 完了したら報告
 - **ユーザーの指示が最優先**
@@ -192,7 +218,11 @@ npm install -g https://github.com/yuremono/agent-relay.git
 Extension がインストールされていないか、起動していません。
 
 ```bash
+# VS Code
 code --install-extension terminal-relay-0.0.1.vsix
+
+# Cursor
+cursor --install-extension terminal-relay-0.0.1.vsix
 ```
 
 Cursor の場合、Developer: Reload Window で再読み込みしてください。
