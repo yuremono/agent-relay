@@ -25,32 +25,22 @@ fi
 
 # Load configuration
 CONFIG_FILE=".relay-config.json"
-if [ -f "$CONFIG_FILE" ]; then
-    # Parse roles from JSON (simple extraction without jq dependency)
-    ROLES=$(grep -o '"roles":\s*\[[^]]*\]' "$CONFIG_FILE" | sed 's/"roles":\s*\[//' | sed 's/\]//' | tr -d '"' | tr -d ' ' | tr ',' ' ')
-    PANE_COUNT=$(grep -o '"paneCount":\s*[0-9]*' "$CONFIG_FILE" | grep -o '[0-9]*')
-    FIRST_PANE_IS_LEADER=$(grep -o '"firstPaneIsLeader":\s*[a-z]*' "$CONFIG_FILE" | grep -o '[a-z]*$')
+FIRST_PANE_IS_LEADER="true"
 
-    if [ -z "$ROLES" ]; then
-        echo -e "${YELLOW}Warning: Could not parse roles from config, using defaults${NC}"
-        ROLES="leader member_1 member_2"
+if [ -f "$CONFIG_FILE" ]; then
+    # Parse firstPaneIsLeader from JSON
+    FIRST_PANE_IS_LEADER=$(grep -o '"firstPaneIsLeader":\s*[a-z]*' "$CONFIG_FILE" | grep -o '[a-z]*$')
+    if [ -z "$FIRST_PANE_IS_LEADER" ]; then
         FIRST_PANE_IS_LEADER="true"
     fi
-
     echo -e "${CYAN}Loaded configuration from $CONFIG_FILE${NC}"
-    echo -e "${CYAN}  Pane count: ${PANE_COUNT}${NC}"
     echo -e "${CYAN}  First pane is leader: ${FIRST_PANE_IS_LEADER}${NC}"
-    echo -e "${CYAN}  Roles: $(echo $ROLES | tr ' ' ', ')${NC}"
     echo ""
 else
     echo -e "${YELLOW}No .relay-config.json found, using default configuration${NC}"
-    ROLES="leader member_1 member_2"
-    FIRST_PANE_IS_LEADER="true"
+    echo -e "${YELLOW}  First pane is leader: true${NC}"
     echo ""
 fi
-
-# Convert roles to array
-ROLE_ARRAY=($ROLES)
 
 # Check if Extension HTTP server is running (port 3773)
 echo -e "${BLUE}Checking Extension server...${NC}"
@@ -61,6 +51,31 @@ else
     echo "Make sure the Terminal Relay extension is installed and active in VS Code/Cursor."
     echo ""
 fi
+
+# Get actual terminal count from extension
+TERMINAL_COUNT=$(curl -s "http://localhost:3773/list" | grep -c '\[' || echo "0")
+if [ "$TERMINAL_COUNT" -eq 0 ]; then
+    echo -e "${YELLOW}Warning: Could not detect terminals, using default 3${NC}"
+    TERMINAL_COUNT=3
+fi
+echo -e "${CYAN}Detected ${TERMINAL_COUNT} terminals${NC}"
+echo ""
+
+# Generate roles based on actual terminal count and firstPaneIsLeader
+ROLE_ARRAY=()
+if [[ "$FIRST_PANE_IS_LEADER" == "true" ]]; then
+    ROLE_ARRAY+=("leader")
+    for ((i=1; i<TERMINAL_COUNT; i++)); do
+        ROLE_ARRAY+=("member_${i}")
+    done
+else
+    for ((i=1; i<=TERMINAL_COUNT; i++)); do
+        ROLE_ARRAY+=("member_${i}")
+    done
+fi
+
+echo -e "${CYAN}Roles: ${ROLE_ARRAY[*]}${NC}"
+echo ""
 
 # Create logs directory
 mkdir -p logs
@@ -75,7 +90,7 @@ fi
 echo -e "${GREEN}Starting file watchers...${NC}"
 echo ""
 
-# Start file watchers based on roles
+# Start file watchers based on generated roles
 PIDS=""
 
 for role in "${ROLE_ARRAY[@]}"; do
@@ -121,9 +136,9 @@ echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}  Configuration${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
-echo -e "  Pane count: ${CYAN}${PANE_COUNT}${NC}"
+echo -e "  Terminal count: ${CYAN}${TERMINAL_COUNT}${NC}"
 echo -e "  First pane is leader: ${CYAN}${FIRST_PANE_IS_LEADER}${NC}"
-echo -e "  Roles: ${CYAN}$(echo $ROLES | tr ' ' ', ')${NC}"
+echo -e "  Roles: ${CYAN}${ROLE_ARRAY[*]}${NC}"
 echo ""
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}  Send Role Info to Terminals${NC}"
@@ -132,30 +147,12 @@ echo ""
 
 # Send role information to each terminal
 if curl -s --connect-timeout 2 http://localhost:3773 > /dev/null 2>&1; then
-    # Get actual terminal count from extension
-    TERMINAL_COUNT=$(curl -s "http://localhost:3773/list" | grep -c '\[' || echo "0")
-    echo -e "${CYAN}  Actual terminals: ${TERMINAL_COUNT}${NC}"
-    echo ""
-
     # First, show terminal indices
     curl -s "http://localhost:3773/identify" > /dev/null 2>&1
 
-    # Generate roles based on actual terminal count and firstPaneIsLeader
-    ACTUAL_ROLES=()
-    if [[ "$FIRST_PANE_IS_LEADER" == "true" ]]; then
-        ACTUAL_ROLES+=("leader")
-        for ((i=1; i<TERMINAL_COUNT; i++)); do
-            ACTUAL_ROLES+=("member_${i}")
-        done
-    else
-        for ((i=1; i<=TERMINAL_COUNT; i++)); do
-            ACTUAL_ROLES+=("member_${i}")
-        done
-    fi
-
     # Then send role information to each terminal
     pane_index=0
-    for role in "${ACTUAL_ROLES[@]}"; do
+    for role in "${ROLE_ARRAY[@]}"; do
         # Determine instruction file based on role
         if [[ "$role" == "leader" ]]; then
             INSTRUCTION_FILE="leader.md"
@@ -184,11 +181,8 @@ echo -e "${BLUE}  Role Assignments${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-# Generate dynamic pane instructions (use ACTUAL_ROLES if available, else fall back to ROLE_ARRAY)
-ROLES_TO_DISPLAY=("${ACTUAL_ROLES[@]:-${ROLE_ARRAY[@]}}")
-
 pane_index=0
-for role in "${ROLES_TO_DISPLAY[@]}"; do
+for role in "${ROLE_ARRAY[@]}"; do
     # Determine instruction file based on role
     if [[ "$role" == "leader" ]]; then
         INSTRUCTION_FILE="leader.md"

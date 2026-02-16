@@ -58,35 +58,14 @@ function log(color, message) {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 
-// Generate roles based on paneCount and firstPaneIsLeader
-function generateRoles(paneCount, firstPaneIsLeader) {
-  if (firstPaneIsLeader) {
-    // Pane 0 = leader, Pane 1+ = member_1, member_2, ...
-    const roles = ['leader'];
-    for (let i = 1; i < paneCount; i++) {
-      roles.push(`member_${i}`);
-    }
-    return roles;
-  } else {
-    // All panes are members: member_1, member_2, ...
-    const roles = [];
-    for (let i = 1; i <= paneCount; i++) {
-      roles.push(`member_${i}`);
-    }
-    return roles;
-  }
-}
-
 // Get the directory where this script is located
 const scriptDir = path.dirname(__filename);
 const templatesDir = path.join(scriptDir, '..', 'templates');
 const targetDir = process.cwd();
 
-// Configuration state
+// Configuration state (firstPaneIsLeader only, roles are determined at startup)
 let config = {
-  paneCount: 3,
-  firstPaneIsLeader: true,
-  roles: ['leader', 'member_1', 'member_2']
+  firstPaneIsLeader: true
 };
 
 function createReadlineInterface() {
@@ -107,9 +86,7 @@ function question(rl, prompt) {
 async function collectConfiguration() {
   if (nonInteractive) {
     config = {
-      paneCount: 3,
-      firstPaneIsLeader: true,
-      roles: generateRoles(3, true)
+      firstPaneIsLeader: true
     };
     return;
   }
@@ -121,24 +98,14 @@ async function collectConfiguration() {
     log('cyan', '=== Configuration ===');
     log('cyan', '');
 
-    // Get pane count
-    const countAnswer = await question(rl, `ペイン数を入力してください [2-6] (default: 3): `);
-    const count = parseInt(countAnswer) || 3;
-    config.paneCount = Math.max(2, Math.min(6, count));
-
     // Ask if first pane is leader
-    log('cyan', '');
     const leaderAnswer = await question(rl, `Pane 0 を leader にしますか？ (Y/n): `);
     config.firstPaneIsLeader = leaderAnswer.toLowerCase() !== 'n';
 
-    // Generate roles based on configuration
-    config.roles = generateRoles(config.paneCount, config.firstPaneIsLeader);
-
     log('cyan', '');
     log('green', 'Configuration complete!');
-    log('green', `  Panes: ${config.paneCount}`);
     log('green', `  First pane is leader: ${config.firstPaneIsLeader ? 'Yes' : 'No'}`);
-    log('green', `  Roles: ${config.roles.join(', ')}`);
+    log('green', `  Roles will be assigned automatically based on terminal count`);
     log('cyan', '');
 
   } finally {
@@ -228,12 +195,10 @@ function generateRoleFiles() {
     }
   });
 
-  // Generate config file
+  // Generate config file (firstPaneIsLeader only, roles are determined at startup)
   const configFile = path.join(targetDir, '.relay-config.json');
   fs.writeFileSync(configFile, JSON.stringify({
-    paneCount: config.paneCount,
     firstPaneIsLeader: config.firstPaneIsLeader,
-    roles: config.roles,
     createdAt: new Date().toISOString()
   }, null, 2));
   log('green', `  Created: ${configFile}`);
