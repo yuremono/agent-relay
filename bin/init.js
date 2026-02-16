@@ -58,15 +58,24 @@ function log(color, message) {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 
-// Preset configurations (2-layer: Leader + Members)
-// Note: Roles are just placeholders - actual roles are assigned when instructing Claude Code
-const presets = {
-  2: { roles: ['agent_1', 'agent_2'], description: '2 terminals' },
-  3: { roles: ['agent_1', 'agent_2', 'agent_3'], description: '3 terminals' },
-  4: { roles: ['agent_1', 'agent_2', 'agent_3', 'agent_4'], description: '4 terminals' },
-  5: { roles: ['agent_1', 'agent_2', 'agent_3', 'agent_4', 'agent_5'], description: '5 terminals' },
-  6: { roles: ['agent_1', 'agent_2', 'agent_3', 'agent_4', 'agent_5', 'agent_6'], description: '6 terminals' }
-};
+// Generate roles based on paneCount and firstPaneIsLeader
+function generateRoles(paneCount, firstPaneIsLeader) {
+  if (firstPaneIsLeader) {
+    // Pane 0 = leader, Pane 1+ = member_1, member_2, ...
+    const roles = ['leader'];
+    for (let i = 1; i < paneCount; i++) {
+      roles.push(`member_${i}`);
+    }
+    return roles;
+  } else {
+    // All panes are members: member_1, member_2, ...
+    const roles = [];
+    for (let i = 1; i <= paneCount; i++) {
+      roles.push(`member_${i}`);
+    }
+    return roles;
+  }
+}
 
 // Get the directory where this script is located
 const scriptDir = path.dirname(__filename);
@@ -75,9 +84,9 @@ const targetDir = process.cwd();
 
 // Configuration state
 let config = {
-  terminalCount: 3,
-  roles: ['leader', 'member_1', 'member_2'],
-  autoSplit: false
+  paneCount: 3,
+  firstPaneIsLeader: true,
+  roles: ['leader', 'member_1', 'member_2']
 };
 
 function createReadlineInterface() {
@@ -98,9 +107,9 @@ function question(rl, prompt) {
 async function collectConfiguration() {
   if (nonInteractive) {
     config = {
-      terminalCount: 3,
-      roles: presets[3].roles,
-      autoSplit: false
+      paneCount: 3,
+      firstPaneIsLeader: true,
+      roles: generateRoles(3, true)
     };
     return;
   }
@@ -112,41 +121,24 @@ async function collectConfiguration() {
     log('cyan', '=== Configuration ===');
     log('cyan', '');
 
-    // Show available presets
-    log('blue', 'Available configurations:');
-    Object.entries(presets).forEach(([count, preset]) => {
-      log('blue', `  ${count} terminals: ${preset.description}`);
-    });
-    log('blue', '');
-
-    // Get terminal count
-    const countAnswer = await question(rl, `Number of terminals [2-6] (default: 3): `);
+    // Get pane count
+    const countAnswer = await question(rl, `ペイン数を入力してください [2-6] (default: 3): `);
     const count = parseInt(countAnswer) || 3;
-    config.terminalCount = Math.max(2, Math.min(6, count));
+    config.paneCount = Math.max(2, Math.min(6, count));
 
-    // Use preset or ask for custom roles
-    const preset = presets[config.terminalCount];
-    if (preset) {
-      log('green', `Using preset: ${preset.description}`);
-      config.roles = [...preset.roles];
-    } else {
-      // Custom roles for edge cases
-      config.roles = [];
-      for (let i = 0; i < config.terminalCount; i++) {
-        const roleAnswer = await question(rl, `Role for Pane ${i}: `);
-        config.roles.push(roleAnswer || `pane_${i}`);
-      }
-    }
+    // Ask if first pane is leader
+    log('cyan', '');
+    const leaderAnswer = await question(rl, `Pane 0 を leader にしますか？ (Y/n): `);
+    config.firstPaneIsLeader = leaderAnswer.toLowerCase() !== 'n';
 
-    // Ask about auto-split
-    const splitAnswer = await question(rl, 'Auto-split terminals via Extension? (y/N): ');
-    config.autoSplit = splitAnswer.toLowerCase() === 'y';
+    // Generate roles based on configuration
+    config.roles = generateRoles(config.paneCount, config.firstPaneIsLeader);
 
     log('cyan', '');
     log('green', 'Configuration complete!');
-    log('green', `  Terminals: ${config.terminalCount}`);
+    log('green', `  Panes: ${config.paneCount}`);
+    log('green', `  First pane is leader: ${config.firstPaneIsLeader ? 'Yes' : 'No'}`);
     log('green', `  Roles: ${config.roles.join(', ')}`);
-    log('green', `  Auto-split: ${config.autoSplit ? 'Yes' : 'No'}`);
     log('cyan', '');
 
   } finally {
@@ -215,116 +207,36 @@ function createGitkeep(dir) {
 
 function generateRoleFiles() {
   if (dryRun) {
-    log('blue', '  Would generate role-specific files');
+    log('blue', '  Would generate config file');
     return;
   }
 
-  // Ensure all required directories exist
-  const inboxDir = path.join(targetDir, 'relay', 'inbox');
-  const toDir = path.join(targetDir, 'relay', 'to');
-  const fromDir = path.join(targetDir, 'relay', 'from');
+  // Copy instruction files (leader.md and member.md only)
   const instructionsDir = path.join(targetDir, 'instructions');
+  if (!fs.existsSync(instructionsDir)) {
+    fs.mkdirSync(instructionsDir, { recursive: true });
+    log('green', `  Created directory: ${instructionsDir}`);
+  }
 
-  [inboxDir, toDir, fromDir, instructionsDir].forEach(dir => {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-      log('green', `  Created directory: ${dir}`);
-    }
-  });
-
-  // Generate inbox files for each role
-  config.roles.forEach(role => {
-    const inboxFile = path.join(inboxDir, `${role}.yaml`);
-    if (!fs.existsSync(inboxFile)) {
-      fs.writeFileSync(inboxFile, `# Inbox for ${role}\nmessages: []\n`);
-      log('green', `  Created: ${inboxFile}`);
-    }
-  });
-
-  // Generate to/from files (all roles have to/from)
-  config.roles.forEach(role => {
-    const toFile = path.join(toDir, `${role}.yaml`);
-    if (!fs.existsSync(toFile)) {
-      fs.writeFileSync(toFile, `# Messages for ${role}\nmessages:\n`);
-      log('green', `  Created: ${toFile}`);
-    }
-
-    const fromFile = path.join(fromDir, `${role}.yaml`);
-    if (!fs.existsSync(fromFile)) {
-      fs.writeFileSync(fromFile, `# Reports from ${role}\nmessages:\n`);
-      log('green', `  Created: ${fromFile}`);
-    }
-  });
-
-  // Generate instruction files
-  config.roles.forEach(role => {
-    const instructionFile = path.join(instructionsDir, `${role}.md`);
-    if (!fs.existsSync(instructionFile)) {
-      const template = generateInstructionTemplate(role);
-      fs.writeFileSync(instructionFile, template);
-      log('green', `  Created: ${instructionFile}`);
+  // Copy leader.md and member.md from templates
+  ['leader.md', 'member.md'].forEach(file => {
+    const srcPath = path.join(templatesDir, 'instructions', file);
+    const destPath = path.join(instructionsDir, file);
+    if (fs.existsSync(srcPath) && !fs.existsSync(destPath)) {
+      fs.copyFileSync(srcPath, destPath);
+      log('green', `  Created: ${destPath}`);
     }
   });
 
   // Generate config file
   const configFile = path.join(targetDir, '.relay-config.json');
   fs.writeFileSync(configFile, JSON.stringify({
-    terminalCount: config.terminalCount,
+    paneCount: config.paneCount,
+    firstPaneIsLeader: config.firstPaneIsLeader,
     roles: config.roles,
     createdAt: new Date().toISOString()
   }, null, 2));
   log('green', `  Created: ${configFile}`);
-}
-
-function generateInstructionTemplate(role) {
-  const isLeader = role === 'leader';
-  const isMember = role.startsWith('member_');
-
-  let template = `# ${role.charAt(0).toUpperCase() + role.slice(1).replace('_', ' ')} 指示書\n\n`;
-  template += `あなたは **${role}** です。\n\n`;
-  template += `## ターミナル位置\n\n`;
-  template += `- ペインインデックス: ${config.roles.indexOf(role)}\n\n`;
-
-  if (isLeader) {
-    template += `## 役割\n\n- ユーザー（人間）からリクエストを受け取る\n- タスクをサブタスクに分解して Members に割り当て\n- 成果を統合してユーザーに報告\n\n`;
-    template += `## 通信方法\n\n### Member への送信\n\`\`\`bash\n./scripts/to_write.sh relay/to/member_1.yaml ${role} "サブタスク" task\n./scripts/inbox_write.sh relay/inbox/member_1.yaml ${role} subtask relay/to/member_1.yaml "通知"\n\`\`\`\n\n### Member からの受信\n\`\`\`bash\ncat relay/inbox/leader.yaml\ncat relay/from/member_1.yaml\n\`\`\`\n`;
-  } else {
-    template += `## 役割\n\n- 実装・テスト実行\n- Leader に進捗報告\n\n`;
-    template += `## 通信方法\n\n### Leader への報告\n\`\`\`bash\n./scripts/from_write.sh relay/from/${role}.yaml completed "完了報告"\n./scripts/inbox_write.sh relay/inbox/leader.yaml ${role} report relay/from/${role}.yaml "完了"\n\`\`\`\n`;
-  }
-
-  return template;
-}
-
-function triggerAutoSplit() {
-  if (!config.autoSplit || dryRun) return;
-
-  const http = require('http');
-
-  log('blue', 'Triggering auto-split via Extension...');
-
-  const rolesParam = config.roles.join(',');
-  const req = http.request({
-    hostname: 'localhost',
-    port: 3773,
-    path: `/setup?count=${config.terminalCount}&roles=${encodeURIComponent(rolesParam)}`,
-    method: 'GET',
-    timeout: 5000
-  }, (res) => {
-    log('green', '  Auto-split triggered successfully');
-  });
-
-  req.on('error', () => {
-    log('yellow', '  Could not trigger auto-split (Extension not responding)');
-    log('yellow', '  You can manually split terminals in VS Code');
-  });
-
-  req.on('timeout', () => {
-    req.destroy();
-    log('yellow', '  Auto-split timeout');
-  });
-
-  req.end();
 }
 
 function printNextSteps() {
@@ -333,34 +245,21 @@ function printNextSteps() {
   log('green', '  Next Steps');
   log('green', '========================================');
   log('green', '');
-  log('blue', '1. Start the file watchers:');
+  log('blue', '1. Install the Extension (if not done):');
+  log('blue', '   code --install-extension terminal-relay-0.0.1.vsix');
+  log('blue', '   Then reload VS Code/Cursor');
+  log('blue', '');
+
+  log('blue', '2. Start the file watchers:');
   log('blue', '   relay-start');
   log('blue', '');
 
-  if (!config.autoSplit) {
-    log('blue', '2. Split terminal into panes:');
-    log('blue', '   Cmd+\\ (multiple times) or Terminal > Split Terminal');
-    log('blue', '');
-  } else {
-    log('blue', '2. Terminals will be auto-split via Extension');
-    log('blue', '');
-  }
-
-  log('blue', `${config.autoSplit ? '3' : '3'}. Start Claude Code in each pane:`);
-  config.roles.forEach((role, i) => {
-    const model = i === 0 ? 'sonnet' : 'haiku';  // First pane: sonnet, others: haiku
-    log('blue', `   Pane ${i}: claude --model ${model}`);
-  });
+  log('blue', '3. Check each pane for role assignment:');
+  log('blue', '   (relay-start will display roles in each terminal)');
   log('blue', '');
 
-  log('blue', '4. Check terminal index:');
-  log('blue', '   curl "http://localhost:3773/identify"');
-  log('blue', '');
-
-  log('blue', '5. Instruct each Claude Code:');
-  log('blue', '   "instructions/leader.md (or member.md) を読んでください。');
-  log('blue', '    あなたのターミナルインデックスは N です。"');
-  log('blue', '');
+  log('blue', '4. Instruct each Claude Code:');
+  log('blue', '   "instructions/<role>.md を読んでください。"');
   log('blue', '');
 
   log('blue', '5. Communication commands:');
@@ -398,11 +297,11 @@ async function main() {
     process.exit(1);
   }
 
-  // Copy base template files
+  // Copy base template files (relay and scripts)
+  // instructions are copied separately in generateRoleFiles
   log('green', 'Copying template files...');
   const filesToCopy = [
     { src: 'relay', dest: 'relay' },
-    { src: 'instructions', dest: 'instructions' },
     { src: 'scripts', dest: 'scripts' }
   ];
 
@@ -477,9 +376,8 @@ async function main() {
     path: '/',
     method: 'GET',
     timeout: 2000
-  }, (res) => {
+  }, () => {
     log('green', '  Extension server is running on port 3773');
-    triggerAutoSplit();
     printNextSteps();
   });
 

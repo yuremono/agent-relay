@@ -24,15 +24,32 @@ Cursor/VS Code 内で完結する、複数の Claude Code セッションが YAM
 npm install -g https://github.com/yuremono/agent-relay.git
 ```
 
-### 2. プロジェクトで初期化
+### 2. ターミナルを分割
 
-Cursor/VS Code でプロジェクトディレクトリを開き、ターミナルで実行：
+VS Code/Cursor でプロジェクトディレクトリを開き、ターミナルを分割：
+
+- **VS Code/Cursor**: `Cmd+\`（複数回）または `Terminal > Split Terminal`
+- 使用するペイン数（2〜6）に合わせて分割
+
+### 3. 各ペインで Claude Code を起動
+
+```bash
+claude
+```
+
+### 4. プロジェクトを初期化
+
+ claude codeを使用しない別のターミナルで実行：
 
 ```bash
 relay-init
 ```
 
-### 3. Extension をインストール
+設定項目：
+- 使用予定ペイン数 [2-6]
+- Pane 0 を leader にするかどうか
+
+### 5. Extension をインストール
 
 生成された VSIX ファイルをインストール：
 
@@ -48,113 +65,54 @@ cursor --install-extension terminal-relay-0.0.1.vsix
 - `Cmd+Shift+P` → `Extensions: Install from VSIX...`
 - `terminal-relay-0.0.1.vsix` を選択
 
-### 4. VS Code/Cursor を再読み込み
+### 6. VS Code/Cursor を再読み込み
 
 `Cmd+Shift+P` → `Developer: Reload Window`
 
-### 5. 動作確認
-
-```bash
-curl http://localhost:3773
-# => "Terminal Relay is running..." と表示されればOK
-```
-
-### 6. システム起動
+### 7. システム起動
 
 ```bash
 relay-start
 ```
 
----
+各ペインにターミナルインデックスと役割が表示されます。
 
-## 使用方法
-
-### 初期化（対話モード）
-
-```bash
-relay-init
-```
-
-ターミナル数を選択：2〜6
-
-※ 役割は各ペインで Claude Code に指示する際に決定します。
-
-### 初期化（非対話モード）
-
-```bash
-relay-init -y
-```
-
-### 生成されるファイル
+### 8. 各 Claude Code に指示
 
 ```
-project/
-├── .relay-config.json         # 設定ファイル
-├── terminal-relay-0.0.1.vsix  # Extension
-├── relay/
-│   ├── inbox/                 # 通知ファイル
-│   ├── to/                    # タスク指示
-│   ├── from/                  # 報告
-│   ├── archive/               # アーカイブ
-│   └── reports/               # 詳細報告
-├── instructions/              # エージェント指示書
-├── logs/                      # ログ
-└── scripts/                   # 通信スクリプト
-```
-
-### ターミナルの準備
-
-#### 方法1: ターミナル分割
-
-- **VS Code/Cursor**: `Cmd+\`（macOS）または `Ctrl+\`（Windows/Linux）
-  - ※ 日本語キーボードでバックスラッシュを入力: `Option(Alt) + ¥`
-
-- **代替方法**: メニューから `Terminal > Split Terminal`
-
-#### 方法2: Extension による自動分割
-
-```bash
-curl "http://localhost:3773/setup?count=3"
-```
-
-### ターミナルインデックスの確認（重要）
-
-各ペインのインデックスを確認します：
-
-```bash
-curl "http://localhost:3773/identify"
-```
-
-各ターミナルに `You are at terminal index N` と表示されます。
-
-### Claude Code の起動
-
-1. 各ペインで Claude Code を起動：
-
-```bash
-claude --model sonnet  # 思考・タスク分配担当
-claude --model haiku   # タスク実行担当
-```
-
-2. 各 Claude Code に指示書とターミナルインデックスを伝えます：
-
-```
-instructions/leader.md を読んでください。
-あなたのターミナルインデックスは 0 です。
+instructions/<role>.md を読んでください。
 ```
 
 ---
 
 ## 役割構成
 
-### 思考・タスク分配担当
+### firstPaneIsLeader = true（デフォルト）
+
+| Pane | Role |
+|------|------|
+| 0 | leader |
+| 1 | member_1 |
+| 2 | member_2 |
+| ... | ... |
+
+### firstPaneIsLeader = false
+
+| Pane | Role |
+|------|------|
+| 0 | member_1 |
+| 1 | member_2 |
+| 2 | member_3 |
+| ... | ... |
+
+### Leader (思考・タスク分配担当)
 
 - ユーザーからのリクエストを受け取る
 - タスクを分割して実行担当に割り当てる
 - 成果を統合して報告
 - **実作業は行わず、待機状態を保つ**
 
-### タスク実行担当
+### Member (タスク実行担当)
 
 - タスクを受け取り実装
 - テストを書いて実行
@@ -163,7 +121,26 @@ instructions/leader.md を読んでください。
 
 ---
 
-## エージェント間の通信
+## 生成されるファイル
+
+```
+project/
+├── .relay-config.json         # 設定ファイル
+├── terminal-relay-0.0.1.vsix  # Extension
+├── relay/
+│   ├── inbox/                 # 通知ファイル (leader, member_1-5)
+│   ├── to/                    # タスク指示
+│   ├── from/                  # 報告
+│   ├── archive/               # アーカイブ
+│   └── reports/               # 詳細報告
+├── instructions/              # エージェント指示書 (leader, member_1-5)
+├── logs/                      # ログ
+└── scripts/                   # 通信スクリプト
+```
+
+---
+
+## ペイン間の通信
 
 ### タスクを送る
 

@@ -28,19 +28,24 @@ CONFIG_FILE=".relay-config.json"
 if [ -f "$CONFIG_FILE" ]; then
     # Parse roles from JSON (simple extraction without jq dependency)
     ROLES=$(grep -o '"roles":\s*\[[^]]*\]' "$CONFIG_FILE" | sed 's/"roles":\s*\[//' | sed 's/\]//' | tr -d '"' | tr -d ' ' | tr ',' ' ')
-    TERMINAL_COUNT=$(grep -o '"terminalCount":\s*[0-9]*' "$CONFIG_FILE" | grep -o '[0-9]*')
+    PANE_COUNT=$(grep -o '"paneCount":\s*[0-9]*' "$CONFIG_FILE" | grep -o '[0-9]*')
+    FIRST_PANE_IS_LEADER=$(grep -o '"firstPaneIsLeader":\s*[a-z]*' "$CONFIG_FILE" | grep -o '[a-z]*$')
 
     if [ -z "$ROLES" ]; then
         echo -e "${YELLOW}Warning: Could not parse roles from config, using defaults${NC}"
-        ROLES="officer leader member_1 member_2"
+        ROLES="leader member_1 member_2"
+        FIRST_PANE_IS_LEADER="true"
     fi
 
     echo -e "${CYAN}Loaded configuration from $CONFIG_FILE${NC}"
+    echo -e "${CYAN}  Pane count: ${PANE_COUNT}${NC}"
+    echo -e "${CYAN}  First pane is leader: ${FIRST_PANE_IS_LEADER}${NC}"
     echo -e "${CYAN}  Roles: $(echo $ROLES | tr ' ' ', ')${NC}"
     echo ""
 else
     echo -e "${YELLOW}No .relay-config.json found, using default configuration${NC}"
-    ROLES="officer leader member_1 member_2"
+    ROLES="leader member_1 member_2"
+    FIRST_PANE_IS_LEADER="true"
     echo ""
 fi
 
@@ -116,39 +121,50 @@ echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}  Configuration${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
+echo -e "  Pane count: ${CYAN}${PANE_COUNT}${NC}"
+echo -e "  First pane is leader: ${CYAN}${FIRST_PANE_IS_LEADER}${NC}"
 echo -e "  Roles: ${CYAN}$(echo $ROLES | tr ' ' ', ')${NC}"
-echo -e "  Number of terminals: ${CYAN}${#ROLE_ARRAY[@]}${NC}"
 echo ""
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}  Next Steps${NC}"
+echo -e "${BLUE}  Identify Terminals${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
-echo "  1. In VS Code/Cursor terminal, split into ${#ROLE_ARRAY[@]} panes:"
-echo "     Cmd+\\ (multiple times) or Terminal > Split Terminal"
+
+# Run identify to show terminal indices and roles
+if curl -s --connect-timeout 2 http://localhost:3773 > /dev/null 2>&1; then
+    echo -e "${GREEN}Running identify on all terminals...${NC}"
+    curl -s "http://localhost:3773/identify" > /dev/null 2>&1
+
+    # Send role information to each terminal
+    pane_index=0
+    for role in "${ROLE_ARRAY[@]}"; do
+        # Send role message to each terminal
+        ROLE_MSG="Your role: ${role}"
+        curl -s "http://localhost:3773/send?terminal=${pane_index}&text=$(echo "$ROLE_MSG" | sed 's/ /%20/g')" > /dev/null 2>&1
+        ((pane_index++))
+    done
+
+    echo -e "${GREEN}Role information sent to all terminals${NC}"
+    echo -e "${YELLOW}Check each pane for your role assignment${NC}"
+else
+    echo -e "${YELLOW}Extension not running, skipping identify${NC}"
+fi
+
 echo ""
-echo "  2. Start Claude Code in each pane:"
+echo -e "${BLUE}========================================${NC}"
+echo -e "${BLUE}  Role Assignments${NC}"
+echo -e "${BLUE}========================================${NC}"
+echo ""
 
 # Generate dynamic pane instructions
 pane_index=0
 for role in "${ROLE_ARRAY[@]}"; do
-    # Determine model based on role
-    if [[ "$role" == "officer" ]] || [[ "$role" == "leader" ]]; then
-        MODEL="opus"
-    else
-        MODEL="sonnet"
-    fi
-
     # Convert role name for display
     DISPLAY_NAME=$(echo "$role" | sed 's/_/ /g')
 
-    echo -e "     ${YELLOW}Pane ${pane_index}:${NC} claude --model ${MODEL}    # ${DISPLAY_NAME}"
+    echo -e "  ${YELLOW}Pane ${pane_index}:${NC} ${DISPLAY_NAME}"
+    echo -e "     Instructions: instructions/${role}.md"
     ((pane_index++))
-done
-
-echo ""
-echo "  3. Each agent reads its instruction file:"
-for role in "${ROLE_ARRAY[@]}"; do
-    echo "     - ${role}: instructions/${role}.md"
 done
 
 echo ""
