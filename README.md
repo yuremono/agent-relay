@@ -130,6 +130,19 @@ Terminal Index: 0 | Your role: leader. instructions/leader.md
 | 2 | member_2 |
 | ... | ... |
 
+### ペイン数の上限
+
+デフォルトで **Leader + Member 1〜5（計6ペイン）** の通信用ファイルが用意されています。
+
+6ペイン以上に拡張する場合は、`relay/` 配下の通信用ファイルを追加してください：
+
+```bash
+# member_6 を追加する場合
+cp relay/inbox/member_5.yaml relay/inbox/member_6.yaml
+cp relay/to/member_5.yaml relay/to/member_6.yaml
+cp relay/from/member_5.yaml relay/from/member_6.yaml
+```
+
 ### firstPaneIsLeader = false
 
 | Pane | Role |
