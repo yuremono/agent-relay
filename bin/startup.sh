@@ -132,6 +132,10 @@ echo ""
 
 # Send role information to each terminal
 if curl -s --connect-timeout 2 http://localhost:3773 > /dev/null 2>&1; then
+    # First, show terminal indices
+    curl -s "http://localhost:3773/identify" > /dev/null 2>&1
+
+    # Then send role information
     pane_index=0
     for role in "${ROLE_ARRAY[@]}"; do
         # Determine instruction file based on role
@@ -141,8 +145,8 @@ if curl -s --connect-timeout 2 http://localhost:3773 > /dev/null 2>&1; then
             INSTRUCTION_FILE="member.md"
         fi
 
-        # Send role message to terminal
-        ROLE_MSG="Your role: ${role}. instructions/${INSTRUCTION_FILE} を読んでください。"
+        # Send role message to terminal (on same line as index)
+        ROLE_MSG=" | Your role: ${role}. instructions/${INSTRUCTION_FILE} を読んでください。"
         ENCODED_MSG=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${ROLE_MSG}'))")
         curl -s "http://localhost:3773/send?terminal=${pane_index}&text=${ENCODED_MSG}" > /dev/null 2>&1
         echo -e "  Pane ${pane_index}: ${role} -> sent"

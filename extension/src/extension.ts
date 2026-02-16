@@ -388,9 +388,8 @@ function identifyTerminals() {
     outputChannel.appendLine(`Identifying ${terminals.length} terminals...`);
 
     terminals.forEach((t, i) => {
-        // Send identity message to each terminal
-        t.sendText(`\n=== Terminal Index: ${i} ===\n`, false);
-        t.sendText(`echo "You are at terminal index ${i}"\n`, true);
+        // Send identity message to each terminal (clean format, no echo)
+        t.sendText(`Terminal Index: ${i}`, false);
         outputChannel.appendLine(`Sent identity to terminal ${i}: ${t.name}`);
     });
 
