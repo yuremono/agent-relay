@@ -330,6 +330,26 @@ async function main() {
     log('yellow', '  No VSIX file found. Build it with: npm run package:extension');
   }
 
+  // Copy CLAUDE_SAMPLE.md
+  log('green', '');
+  log('green', 'Copying CLAUDE_SAMPLE.md...');
+  const sampleFile = path.join(scriptDir, '..', 'CLAUDE_SAMPLE.md');
+  const destSample = path.join(targetDir, 'CLAUDE_SAMPLE.md');
+  if (fs.existsSync(sampleFile)) {
+    if (fs.existsSync(destSample) && !force) {
+      log('yellow', `  File exists (skip): ${destSample}`);
+    } else {
+      if (dryRun) {
+        log('blue', `  Would copy: ${sampleFile} -> ${destSample}`);
+      } else {
+        fs.copyFileSync(sampleFile, destSample);
+        log('green', `  Copied: ${destSample}`);
+      }
+    }
+  } else {
+    log('yellow', '  CLAUDE_SAMPLE.md not found in package');
+  }
+
   // Check for Extension
   log('green', '');
   log('green', 'Checking Terminal Relay Extension...');
