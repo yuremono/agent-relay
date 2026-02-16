@@ -132,12 +132,30 @@ echo ""
 
 # Send role information to each terminal
 if curl -s --connect-timeout 2 http://localhost:3773 > /dev/null 2>&1; then
+    # Get actual terminal count from extension
+    TERMINAL_COUNT=$(curl -s "http://localhost:3773/list" | grep -c '\[' || echo "0")
+    echo -e "${CYAN}  Actual terminals: ${TERMINAL_COUNT}${NC}"
+    echo ""
+
     # First, show terminal indices
     curl -s "http://localhost:3773/identify" > /dev/null 2>&1
 
-    # Then send role information
+    # Generate roles based on actual terminal count and firstPaneIsLeader
+    ACTUAL_ROLES=()
+    if [[ "$FIRST_PANE_IS_LEADER" == "true" ]]; then
+        ACTUAL_ROLES+=("leader")
+        for ((i=1; i<TERMINAL_COUNT; i++)); do
+            ACTUAL_ROLES+=("member_${i}")
+        done
+    else
+        for ((i=1; i<=TERMINAL_COUNT; i++)); do
+            ACTUAL_ROLES+=("member_${i}")
+        done
+    fi
+
+    # Then send role information to each terminal
     pane_index=0
-    for role in "${ROLE_ARRAY[@]}"; do
+    for role in "${ACTUAL_ROLES[@]}"; do
         # Determine instruction file based on role
         if [[ "$role" == "leader" ]]; then
             INSTRUCTION_FILE="leader.md"
@@ -149,7 +167,7 @@ if curl -s --connect-timeout 2 http://localhost:3773 > /dev/null 2>&1; then
         ROLE_MSG=" | Your role: ${role}. instructions/${INSTRUCTION_FILE} を読んでください。"
         ENCODED_MSG=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${ROLE_MSG}'))")
         curl -s "http://localhost:3773/send?terminal=${pane_index}&text=${ENCODED_MSG}" > /dev/null 2>&1
-        echo -e "  Pane ${pane_index}: ${role} -> sent"
+        echo -e "  Terminal ${pane_index}: ${role} -> sent"
         ((pane_index++))
     done
 
@@ -166,14 +184,23 @@ echo -e "${BLUE}  Role Assignments${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-# Generate dynamic pane instructions
+# Generate dynamic pane instructions (use ACTUAL_ROLES if available, else fall back to ROLE_ARRAY)
+ROLES_TO_DISPLAY=("${ACTUAL_ROLES[@]:-${ROLE_ARRAY[@]}}")
+
 pane_index=0
-for role in "${ROLE_ARRAY[@]}"; do
+for role in "${ROLES_TO_DISPLAY[@]}"; do
+    # Determine instruction file based on role
+    if [[ "$role" == "leader" ]]; then
+        INSTRUCTION_FILE="leader.md"
+    else
+        INSTRUCTION_FILE="member.md"
+    fi
+
     # Convert role name for display
     DISPLAY_NAME=$(echo "$role" | sed 's/_/ /g')
 
-    echo -e "  ${YELLOW}Pane ${pane_index}:${NC} ${DISPLAY_NAME}"
-    echo -e "     Instructions: instructions/${role}.md"
+    echo -e "  ${YELLOW}Terminal ${pane_index}:${NC} ${DISPLAY_NAME}"
+    echo -e "     Instructions: instructions/${INSTRUCTION_FILE}"
     ((pane_index++))
 done
 
