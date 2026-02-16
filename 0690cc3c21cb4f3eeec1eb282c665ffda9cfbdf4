@@ -1,0 +1,46 @@
+templates/scripts/notify_leader.sh
+  fbdedb917460e2c5 3,31-32,35,38
+templates/instructions/leader.md
+  fbdedb917460e2c5 27-38
+scripts/notify_leader.sh
+  fbdedb917460e2c5 3,31-32,35,38
+scripts/notify_member.sh
+  fbdedb917460e2c5 32-33
+templates/instructions/member.md
+  fbdedb917460e2c5 25-36
+templates/scripts/notify_member.sh
+  fbdedb917460e2c5 32-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.3",
+  "base_commit_sha": "0690cc3c21cb4f3eeec1eb282c665ffda9cfbdf4",
+  "prompts": {
+    "adf207cbfc4f4cf0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "49ca3fbc-5541-4f8b-a47e-9cddb40d852c",
+        "model": "glm-5"
+      },
+      "human_author": "yuremono <5alviaofficinali50@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 41,
+      "overriden_lines": 0
+    },
+    "fbdedb917460e2c5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "352e49ed-00fd-44a7-91ae-c12ae2f86457",
+        "model": "glm-5"
+      },
+      "human_author": "yuremono <5alviaofficinali50@gmail.com>",
+      "messages": [],
+      "total_additions": 38,
+      "total_deletions": 12,
+      "accepted_lines": 38,
+      "overriden_lines": 0
+    }
+  }
+}
