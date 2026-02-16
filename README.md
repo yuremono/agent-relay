@@ -29,7 +29,6 @@ npm install -g https://github.com/yuremono/agent-relay.git
 VS Code/Cursor でプロジェクトディレクトリを開き、ターミナルを分割：
 
 - **VS Code/Cursor**: `Cmd+\`（複数回）または `Terminal > Split Terminal`
-- 使用するペイン数（2〜6）に合わせて分割
 
 ### 3. 各ペインで Claude Code を起動
 
@@ -39,15 +38,18 @@ claude
 
 ### 4. プロジェクトを初期化
 
- claude codeを使用しない別のターミナルで実行：
+Claude Code を使用しない別のターミナルで実行：
+※Tarminal IndexはOSレベルで自動付与されます。Claude Codeを先に起動することで
+Terminal Index: 0,Terminal Index: 1,Terminal Index: 3,のように並び順通りの番号が付きます。
 
 ```bash
 relay-init
 ```
 
 設定項目：
-- 使用予定ペイン数 [2-6]
-- Pane 0 を leader にするかどうか
+- Pane 0 を leader にするかどうか（Y/n）
+
+※ ペイン数は自動検出されます。途中でターミナルを追加しても `relay-start` を再実行すれば自動的に反映されます。
 
 ### 5. Extension をインストール
 
@@ -77,10 +79,17 @@ relay-start
 
 各ペインにターミナルインデックスと役割が表示されます。
 
+```
+Terminal Index: 0 | Your role: leader. instructions/leader.md               
+  を読んでください。                             
+```
+
 ### 8. 各 Claude Code に指示
 
 ```
-instructions/<role>.md を読んでください。
+Terminal Index: 0 | Your role: leader. instructions/leader.md 
+  を読んでください。
+  [この下に続けて指示を出せます]                             
 ```
 
 ---
@@ -125,7 +134,7 @@ instructions/<role>.md を読んでください。
 
 ```
 project/
-├── .relay-config.json         # 設定ファイル
+├── .relay-config.json         # 設定ファイル (firstPaneIsLeader のみ)
 ├── terminal-relay-0.0.1.vsix  # Extension
 ├── relay/
 │   ├── inbox/                 # 通知ファイル (leader, member_1-5)
@@ -133,7 +142,7 @@ project/
 │   ├── from/                  # 報告
 │   ├── archive/               # アーカイブ
 │   └── reports/               # 詳細報告
-├── instructions/              # エージェント指示書 (leader, member_1-5)
+├── instructions/              # エージェント指示書 (leader.md, member.md)
 ├── logs/                      # ログ
 └── scripts/                   # 通信スクリプト
 ```

@@ -8,10 +8,7 @@
     "relay-start": "./bin/startup.sh"
   },
   "scripts": {
-    "start": "concurrently \"npm run watch:officer\" \"npm run watch:leader\" \"npm run watch:member1\"",
-    "watch:officer": "fswatch -o relay/inbox/officer.yaml | xargs -I {} ./scripts/notify_officer.sh",
-    "watch:leader": "fswatch -o relay/inbox/leader.yaml | xargs -I {} ./scripts/notify_leader.sh",
-    "watch:member1": "fswatch -o relay/inbox/member_1.yaml | xargs -I {} ./scripts/notify_member.sh 1",
+    "start": "echo 'Use relay-start command instead'",
     "build:extension": "cd extension && npm run compile",
     "package:extension": "cd extension && npx vsce package --allow-missing-repository",
     "test": "node bin/init.js --dry-run"

@@ -12,7 +12,7 @@ interface TerminalConfig {
 
 let currentConfig: TerminalConfig = {
     count: 3,
-    roles: ['officer', 'leader', 'member_1']
+    roles: ['leader', 'member_1', 'member_2']
 };
 
 export function activate(context: vscode.ExtensionContext) {
@@ -272,24 +272,12 @@ export function deactivate() {
 }
 
 function getDefaultRoles(count: number): string[] {
-    switch (count) {
-        case 2:
-            return ['member_1', 'member_2'];
-        case 3:
-            return ['leader', 'member_1', 'member_2'];
-        case 4:
-            return ['officer', 'leader', 'member_1', 'member_2'];
-        case 5:
-            return ['officer', 'leader', 'member_1', 'member_2', 'member_3'];
-        case 6:
-            return ['officer', 'leader', 'member_1', 'member_2', 'member_3', 'member_4'];
-        default:
-            const roles = ['officer', 'leader'];
-            for (let i = 1; i <= count - 2; i++) {
-                roles.push(`member_${i}`);
-            }
-            return roles;
+    // Leader + member_1, member_2, ...
+    const roles = ['leader'];
+    for (let i = 1; i < count; i++) {
+        roles.push(`member_${i}`);
     }
+    return roles;
 }
 
 async function splitTerminals(count: number) {
