@@ -29,8 +29,8 @@ if [[ "$CURRENT_APP" != "Visual Studio Code" && "$CURRENT_APP" != "Cursor" && "$
     sleep 0.5
 fi
 
-# Terminal index: Member_1 = 2, Member_2 = 3, etc.
-TERMINAL_INDEX=$((MEMBER_INDEX + 1))
+# Terminal index: Leader = 0, Member_1 = 1, Member_2 = 2, etc.
+TERMINAL_INDEX=$MEMBER_INDEX
 
 # Send notification to Extension
 # Message: "Please check relay/inbox/member_N.yaml"

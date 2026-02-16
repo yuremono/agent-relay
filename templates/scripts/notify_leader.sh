@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# notify_leader.sh - Send notification to Leader (Pane 1)
+# notify_leader.sh - Send notification to Leader (Pane 0)
 # Called by fswatch when relay/inbox/leader.yaml changes
 
 LOG_FILE="logs/watcher.log"
@@ -28,13 +28,14 @@ if [[ "$CURRENT_APP" != "Visual Studio Code" && "$CURRENT_APP" != "Cursor" && "$
 fi
 
 # Send notification to Extension
-# Leader is at terminal index 1
+# Leader is at terminal index 0 (first pane)
+TERMINAL_INDEX=0
 MESSAGE="relay/inbox/leader.yaml%E3%82%92%E7%A2%BA%E8%AA%8D%E3%81%97%E3%81%A6%E3%81%8F%E3%81%A0%E3%81%95%E3%81%84"  # "を確認してください"
 
-RESPONSE=$(curl -s "http://localhost:3773/chat?terminal=1&text=$MESSAGE" 2>&1)
+RESPONSE=$(curl -s "http://localhost:3773/chat?terminal=${TERMINAL_INDEX}&text=$MESSAGE" 2>&1)
 
 if [ $? -eq 0 ]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] notify_leader: Sent to terminal 1 - $RESPONSE" >> "$LOG_FILE"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] notify_leader: Sent to terminal $TERMINAL_INDEX - $RESPONSE" >> "$LOG_FILE"
 else
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] notify_leader: ERROR - Extension not responding" >> "$LOG_FILE"
 fi
