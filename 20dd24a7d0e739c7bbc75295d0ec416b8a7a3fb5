@@ -1,0 +1,38 @@
+extension/src/extension.ts
+  4665963a3bee7c11 391-392
+bin/startup.sh
+  4665963a3bee7c11 135-138,148-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.3",
+  "base_commit_sha": "20dd24a7d0e739c7bbc75295d0ec416b8a7a3fb5",
+  "prompts": {
+    "4665963a3bee7c11": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c25a19c9-79f9-4248-bb31-200715107b2c",
+        "model": "glm-5"
+      },
+      "human_author": "yuremono <5alviaofficinali50@gmail.com>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 5,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    },
+    "adf207cbfc4f4cf0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "49ca3fbc-5541-4f8b-a47e-9cddb40d852c",
+        "model": "glm-5"
+      },
+      "human_author": "yuremono <5alviaofficinali50@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 41,
+      "overriden_lines": 0
+    }
+  }
+}
