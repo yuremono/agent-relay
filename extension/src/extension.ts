@@ -76,26 +76,6 @@ function startServer() {
             const text = url.searchParams.get('text') || '';
             sendChatMessage(terminal, text);
             res.end(`OK: Chat sent to terminal ${terminal}`);
-        } else if (url.pathname === '/chat2') {
-            const terminal = parseInt(url.searchParams.get('terminal') || '0', 10);
-            const text = url.searchParams.get('text') || '';
-            sendChatMethod2(terminal, text);
-            res.end(`OK: Chat2 sent to terminal ${terminal}`);
-        } else if (url.pathname === '/chat3') {
-            const terminal = parseInt(url.searchParams.get('terminal') || '0', 10);
-            const text = url.searchParams.get('text') || '';
-            sendChatMethod3(terminal, text);
-            res.end(`OK: Chat3 sent to terminal ${terminal}`);
-        } else if (url.pathname === '/chat4') {
-            const terminal = parseInt(url.searchParams.get('terminal') || '0', 10);
-            const text = url.searchParams.get('text') || '';
-            sendChatMethod4(terminal, text);
-            res.end(`OK: Chat4 sent to terminal ${terminal}`);
-        } else if (url.pathname === '/chat5') {
-            const terminal = parseInt(url.searchParams.get('terminal') || '0', 10);
-            const text = url.searchParams.get('text') || '';
-            sendChatMethod5(terminal, text);
-            res.end(`OK: Chat5 sent to terminal ${terminal}`);
         } else if (url.pathname === '/test') {
             testTerminalFocus();
             res.end('OK: Test executed');
@@ -185,56 +165,6 @@ function sendChatMessage(index: number, text: string) {
         }, 1500);
     } else {
         outputChannel.appendLine(`Terminal ${index} not found. Available: ${terminals.length}`);
-    }
-}
-
-function sendChatMethod2(index: number, text: string) {
-    const terminals = vscode.window.terminals;
-    if (index >= 0 && index < terminals.length) {
-        terminals[index].sendText(text, false);
-        setTimeout(() => {
-            vscode.commands.executeCommand('workbench.action.terminal.sendSequence', {
-                text: '\r'
-            });
-            outputChannel.appendLine(`Enter (sendSequence \\r) sent to terminal ${index}`);
-        }, 1500);
-    }
-}
-
-function sendChatMethod3(index: number, text: string) {
-    const terminals = vscode.window.terminals;
-    if (index >= 0 && index < terminals.length) {
-        terminals[index].sendText(text, false);
-        setTimeout(() => {
-            vscode.commands.executeCommand('workbench.action.terminal.sendSequence', {
-                text: '\n'
-            });
-            outputChannel.appendLine(`Enter (sendSequence \\n) sent to terminal ${index}`);
-        }, 1500);
-    }
-}
-
-function sendChatMethod4(index: number, text: string) {
-    const terminals = vscode.window.terminals;
-    if (index >= 0 && index < terminals.length) {
-        terminals[index].sendText(text, false);
-        setTimeout(() => {
-            terminals[index].sendText('\n', false);
-            outputChannel.appendLine(`Enter (sendText \\n) sent to terminal ${index}`);
-        }, 1500);
-    }
-}
-
-function sendChatMethod5(index: number, text: string) {
-    const terminals = vscode.window.terminals;
-    if (index >= 0 && index < terminals.length) {
-        terminals[index].sendText(text, false);
-        setTimeout(() => {
-            vscode.commands.executeCommand('workbench.action.terminal.sendSequence', {
-                text: String.fromCharCode(13) // CR
-            });
-            outputChannel.appendLine(`Enter (charCode 13) sent to terminal ${index}`);
-        }, 1500);
     }
 }
 

@@ -4,6 +4,17 @@ Cursor/VS Code 内で完結する、複数の Claude Code セッションが YAM
 
 ---
 
+## 参考文献
+
+  本プロジェクトの構想は以下に触発されました：
+
+  - **[multi-agent-shogun](https://github.com/yohey-w/multi-agent-shogun)** -
+  tmuxベースのマルチエージェント並列開発プラットフォーム。YAMLファイルによる通信
+  や階層構成などのアーキテクチャを参考にしました。
+  - [Claude Code 公式ドキュメント - Agent  Teams](https://code.claude.com/docs/en/agent-teams)
+
+---
+
 ## 前提条件
 
 | ソフトウェア | 確認コマンド | インストール方法 |
@@ -209,6 +220,16 @@ Claude Code のチャットウィンドウに人間が入力したかのよう�
 3. Enter を送信
 
 この2回送信アプローチにより、Claude Code がメッセージを認識できるようになります。
+
+---
+
+## セキュリティ注意書き
+
+本システムの VS Code Extension は、ローカル開発環境での使用を想定しています：
+
+- HTTP サーバーは `localhost`（ポート 3773）でのみリッスンします
+- 認証機能はありません
+- ネットワークに公開しないでください
 
 ---
 

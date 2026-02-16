@@ -21,7 +21,7 @@
     "terminal",
     "yaml"
   ],
-  "author": "",
+  "author": "yuremono",
   "license": "MIT",
   "dependencies": {
     "concurrently": "^8.2.2"
