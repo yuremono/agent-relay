@@ -177,12 +177,12 @@ function sendChatMessage(index: number, text: string) {
         terminals[index].sendText(text, false);
         outputChannel.appendLine(`Chat text sent to terminal ${index}: ${text}`);
 
-        // 2. 1秒待ってからEnterを送る（tmuxの2回送信アプローチ）
+        // 2. 1.5秒待ってからEnterを送る（tmuxの2回送信アプローチ）
         setTimeout(() => {
             // 方法1: sendTextで空文字+改行
             terminals[index].sendText('', true);
             outputChannel.appendLine(`Enter (sendText) sent to terminal ${index}`);
-        }, 1000);
+        }, 1500);
     } else {
         outputChannel.appendLine(`Terminal ${index} not found. Available: ${terminals.length}`);
     }
@@ -197,7 +197,7 @@ function sendChatMethod2(index: number, text: string) {
                 text: '\r'
             });
             outputChannel.appendLine(`Enter (sendSequence \\r) sent to terminal ${index}`);
-        }, 1000);
+        }, 1500);
     }
 }
 
@@ -210,7 +210,7 @@ function sendChatMethod3(index: number, text: string) {
                 text: '\n'
             });
             outputChannel.appendLine(`Enter (sendSequence \\n) sent to terminal ${index}`);
-        }, 1000);
+        }, 1500);
     }
 }
 
@@ -221,7 +221,7 @@ function sendChatMethod4(index: number, text: string) {
         setTimeout(() => {
             terminals[index].sendText('\n', false);
             outputChannel.appendLine(`Enter (sendText \\n) sent to terminal ${index}`);
-        }, 1000);
+        }, 1500);
     }
 }
 
@@ -234,7 +234,7 @@ function sendChatMethod5(index: number, text: string) {
                 text: String.fromCharCode(13) // CR
             });
             outputChannel.appendLine(`Enter (charCode 13) sent to terminal ${index}`);
-        }, 1000);
+        }, 1500);
     }
 }
 
@@ -262,7 +262,7 @@ function testTerminalFocus() {
         if (terminals.length > 0) {
             terminals[0].sendText('echo "Terminal focus test successful!"\n');
         }
-    }, 1000);
+    }, 1500);
 
     vscode.window.showInformationMessage('Terminal Focus Test: Check terminal panel');
 }

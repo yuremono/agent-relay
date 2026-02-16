@@ -41,7 +41,7 @@ let server = null;
 let outputChannel;
 let currentConfig = {
     count: 3,
-    roles: ['officer', 'leader', 'member_1']
+    roles: ['leader', 'member_1', 'member_2']
 };
 function activate(context) {
     outputChannel = vscode.window.createOutputChannel('Terminal Relay');
@@ -189,12 +189,12 @@ function sendChatMessage(index, text) {
         // 1. テキストだけ送る（改行なし）
         terminals[index].sendText(text, false);
         outputChannel.appendLine(`Chat text sent to terminal ${index}: ${text}`);
-        // 2. 1秒待ってからEnterを送る（tmuxの2回送信アプローチ）
+        // 2. 1.5秒待ってからEnterを送る（tmuxの2回送信アプローチ）
         setTimeout(() => {
             // 方法1: sendTextで空文字+改行
             terminals[index].sendText('', true);
             outputChannel.appendLine(`Enter (sendText) sent to terminal ${index}`);
-        }, 1000);
+        }, 1500);
     }
     else {
         outputChannel.appendLine(`Terminal ${index} not found. Available: ${terminals.length}`);
@@ -209,7 +209,7 @@ function sendChatMethod2(index, text) {
                 text: '\r'
             });
             outputChannel.appendLine(`Enter (sendSequence \\r) sent to terminal ${index}`);
-        }, 1000);
+        }, 1500);
     }
 }
 function sendChatMethod3(index, text) {
@@ -221,7 +221,7 @@ function sendChatMethod3(index, text) {
                 text: '\n'
             });
             outputChannel.appendLine(`Enter (sendSequence \\n) sent to terminal ${index}`);
-        }, 1000);
+        }, 1500);
     }
 }
 function sendChatMethod4(index, text) {
@@ -231,7 +231,7 @@ function sendChatMethod4(index, text) {
         setTimeout(() => {
             terminals[index].sendText('\n', false);
             outputChannel.appendLine(`Enter (sendText \\n) sent to terminal ${index}`);
-        }, 1000);
+        }, 1500);
     }
 }
 function sendChatMethod5(index, text) {
@@ -243,7 +243,7 @@ function sendChatMethod5(index, text) {
                 text: String.fromCharCode(13) // CR
             });
             outputChannel.appendLine(`Enter (charCode 13) sent to terminal ${index}`);
-        }, 1000);
+        }, 1500);
     }
 }
 function testTerminalFocus() {
@@ -265,31 +265,19 @@ function testTerminalFocus() {
         if (terminals.length > 0) {
             terminals[0].sendText('echo "Terminal focus test successful!"\n');
         }
-    }, 1000);
+    }, 1500);
     vscode.window.showInformationMessage('Terminal Focus Test: Check terminal panel');
 }
 function deactivate() {
     stopServer();
 }
 function getDefaultRoles(count) {
-    switch (count) {
-        case 2:
-            return ['member_1', 'member_2'];
-        case 3:
-            return ['leader', 'member_1', 'member_2'];
-        case 4:
-            return ['officer', 'leader', 'member_1', 'member_2'];
-        case 5:
-            return ['officer', 'leader', 'member_1', 'member_2', 'member_3'];
-        case 6:
-            return ['officer', 'leader', 'member_1', 'member_2', 'member_3', 'member_4'];
-        default:
-            const roles = ['officer', 'leader'];
-            for (let i = 1; i <= count - 2; i++) {
-                roles.push(`member_${i}`);
-            }
-            return roles;
+    // Leader + member_1, member_2, ...
+    const roles = ['leader'];
+    for (let i = 1; i < count; i++) {
+        roles.push(`member_${i}`);
     }
+    return roles;
 }
 async function splitTerminals(count) {
     outputChannel.appendLine(`Splitting to ${count} terminals...`);
@@ -371,9 +359,8 @@ function identifyTerminals() {
     const terminals = vscode.window.terminals;
     outputChannel.appendLine(`Identifying ${terminals.length} terminals...`);
     terminals.forEach((t, i) => {
-        // Send identity message to each terminal
-        t.sendText(`\n=== Terminal Index: ${i} ===\n`, false);
-        t.sendText(`echo "You are at terminal index ${i}"\n`, true);
+        // Send identity message to each terminal (clean format, no echo)
+        t.sendText(`Terminal Index: ${i}`, false);
         outputChannel.appendLine(`Sent identity to terminal ${i}: ${t.name}`);
     });
     vscode.window.showInformationMessage(`Terminal Relay: Sent identity to ${terminals.length} terminals`);
