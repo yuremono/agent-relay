@@ -65,7 +65,7 @@ Claude Code を使用しない別のターミナルで実行：
 
 Terminal Index: 0,Terminal Index: 1,Terminal Index: 3,のように並び順通りの番号が付きます。
 
-`Open New External `,`ターミナル：エディター領域で新しいターミナルを作成`がオススメ
+`Open New External ` , `ターミナル：エディター領域で新しいターミナルを作成` がオススメです。
 
 ```bash
 relay-init
