@@ -107,6 +107,10 @@ for role in "${ROLE_ARRAY[@]}"; do
         fswatch -o "$INBOX_FILE" 2>/dev/null | while read; do
             if [ -f "./scripts/notify_${role}.sh" ]; then
                 ./scripts/notify_${role}.sh
+            elif [[ "$role" == member_* ]]; then
+                # Extract member index from role name (e.g., member_1 -> 1)
+                MEMBER_IDX=$(echo "$role" | sed 's/member_//')
+                ./scripts/notify_member.sh "$MEMBER_IDX"
             else
                 # Generic notification for custom roles
                 afplay /System/Library/Sounds/Glass.aiff 2>/dev/null || true

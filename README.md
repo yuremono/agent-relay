@@ -198,6 +198,17 @@ project/
 | `GET /identify` | 各ターミナルにインデックスを表示 |
 | `GET /notify?terminal=N&message=MSG` | ターミナルに通知 |
 | `GET /send?terminal=N&text=TEXT` | ターミナルにテキスト送信 |
+| `GET /chat?terminal=N&text=TEXT` | チャット形式で送信（テキスト → 1秒待機 → Enter） |
+
+### `/chat` エンドポイント（重要）
+
+Claude Code のチャットウィンドウに人間が入力したかのようにメッセージを送信します：
+
+1. テキストを入力（Enter なし）
+2. 1秒待機
+3. Enter を送信
+
+この2回送信アプローチにより、Claude Code がメッセージを認識できるようになります。
 
 ---
 
