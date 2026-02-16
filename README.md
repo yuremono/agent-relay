@@ -14,6 +14,16 @@ Cursor/VS Code 内で完結する、複数の Claude Code セッションが YAM
 | VS Code または Cursor | - | 公式サイトからダウンロード |
 | Claude Code CLI | `claude --version` | [claude.ai](https://claude.ai/) |
 
+### 一括インストール（macOS）
+
+```bash
+# Homebrew で Node.js と fswatch をインストール
+brew install node fswatch
+
+# Claude Code CLI をインストール
+# https://claude.ai/ からダウンロード
+```
+
 ---
 
 ## クイックスタート

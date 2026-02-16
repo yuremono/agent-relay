@@ -36,7 +36,8 @@
     "templates/",
     "extension/out/",
     "extension/package.json",
-    "extension/terminal-relay-*.vsix"
+    "extension/terminal-relay-*.vsix",
+    "CLAUDE_SAMPLE.md"
   ],
   "repository": {
     "type": "git",
