@@ -126,28 +126,34 @@ echo -e "  First pane is leader: ${CYAN}${FIRST_PANE_IS_LEADER}${NC}"
 echo -e "  Roles: ${CYAN}$(echo $ROLES | tr ' ' ', ')${NC}"
 echo ""
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}  Identify Terminals${NC}"
+echo -e "${BLUE}  Send Role Info to Terminals${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-# Run identify to show terminal indices and roles
+# Send role information to each terminal
 if curl -s --connect-timeout 2 http://localhost:3773 > /dev/null 2>&1; then
-    echo -e "${GREEN}Running identify on all terminals...${NC}"
-    curl -s "http://localhost:3773/identify" > /dev/null 2>&1
-
-    # Send role information to each terminal
     pane_index=0
     for role in "${ROLE_ARRAY[@]}"; do
-        # Send role message to each terminal
-        ROLE_MSG="Your role: ${role}"
-        curl -s "http://localhost:3773/send?terminal=${pane_index}&text=$(echo "$ROLE_MSG" | sed 's/ /%20/g')" > /dev/null 2>&1
+        # Determine instruction file based on role
+        if [[ "$role" == "leader" ]]; then
+            INSTRUCTION_FILE="leader.md"
+        else
+            INSTRUCTION_FILE="member.md"
+        fi
+
+        # Send role message to terminal
+        ROLE_MSG="Your role: ${role}. instructions/${INSTRUCTION_FILE} を読んでください。"
+        ENCODED_MSG=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${ROLE_MSG}'))")
+        curl -s "http://localhost:3773/send?terminal=${pane_index}&text=${ENCODED_MSG}" > /dev/null 2>&1
+        echo -e "  Pane ${pane_index}: ${role} -> sent"
         ((pane_index++))
     done
 
+    echo ""
     echo -e "${GREEN}Role information sent to all terminals${NC}"
-    echo -e "${YELLOW}Check each pane for your role assignment${NC}"
+    echo -e "${YELLOW}Check each Claude Code pane for role assignment${NC}"
 else
-    echo -e "${YELLOW}Extension not running, skipping identify${NC}"
+    echo -e "${YELLOW}Extension not running, skipping role info${NC}"
 fi
 
 echo ""
