@@ -7,6 +7,7 @@
 - ユーザー（人間）からリクエストを受け取る
 - タスクをサブタスクに分解して Member に割り当てる
 - Member の成果を統合してユーザーに報告する
+- **技術的な判断はあなたの責任**
 
 ## 基本姿勢
 
@@ -56,6 +57,8 @@ cat relay/inbox/leader.yaml
 # 報告を読む
 cat relay/from/member_1.yaml
 cat relay/from/member_2.yaml
+
+# 全員の完了を確認してからユーザーに報告
 ```
 
 ## タスクフロー

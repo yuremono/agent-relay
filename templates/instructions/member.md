@@ -5,8 +5,9 @@
 ## 役割
 
 - Leader からタスクを受け取り実装する
+- ユーザーからの指示で作業する場合もある
 - テストを書いて実行する
-- 完了したら Leader に報告する
+- 完了したら from/ に報告書で報告する（Leader 指示でもユーザー指示でも同じ）
 
 ## 基本姿勢
 
@@ -63,28 +64,67 @@ cat relay/to/member_1.yaml
 ### タスク完了時
 
 ```bash
-# 報告書を書く（必須・記録用）
-./scripts/from_write.sh relay/from/member_1.yaml completed "完了内容"
+# 報告書を書く
+./scripts/from_write.sh relay/from/member_1.yaml completed "JWT検証を実装しました"
+./scripts/inbox_write.sh relay/inbox/leader.yaml member_1 report relay/from/member_1.yaml "完了"
 
 # チャットで結果を伝える
 ```
 
+### ブロッカー発生時
+
+```bash
+# 即座に報告
+./scripts/from_write.sh relay/from/member_1.yaml blocked "依存パッケージのバージョン競合"
+./scripts/inbox_write.sh relay/inbox/leader.yaml member_1 report relay/from/member_1.yaml "ブロック中"
+```
+
 ## 報告書の書き方
 
-ユーザーからの直接指示で作業した場合：
-```
-## 完了報告
+from/ に書く報告書は、作業記録として残る重要なものです。
 
-ユーザーからの指示により、以下を実装しました：
-- ...
+### ユーザーからの直接指示で作業した場合
+
+```yaml
+messages:
+  - seq: 1
+    timestamp: "2026-02-23T12:00:00Z"
+    status: "completed"
+    message: |
+      ## 完了報告
+
+      ユーザーからの指示により、以下を実装しました：
+      - JWT認証機能を追加
+      - テストを作成し全件パス
 ```
 
-Leader からの指示で作業した場合：
-```
-## 完了報告
+### Leader からの指示で作業した場合
 
-実装内容：
-- ...
+```yaml
+messages:
+  - seq: 1
+    timestamp: "2026-02-23T12:00:00Z"
+    status: "completed"
+    message: |
+      ## 完了報告
+
+      実装内容：
+      - auth.ts にJWT検証を実装
+      - 単体テスト作成済み
+```
+
+### ブロッカー発生時
+
+```yaml
+messages:
+  - seq: 1
+    timestamp: "2026-02-23T12:00:00Z"
+    status: "blocked"
+    message: |
+      ## ブロッカー報告
+
+      依存パッケージのバージョン競合が発生。
+      package.json の更新が必要です。
 ```
 
 ## タスクフロー

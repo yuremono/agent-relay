@@ -1,4 +1,4 @@
-# プロジェクト指示書（Agent-Relay システム設定）
+# プロジェクトルール
 
 このファイルは、Agent-Relay システムで動作する エージェント に読み込ませる指示書です。
 
@@ -69,8 +69,8 @@ Leader（調整役）
 
 ```
 relay/
-├── to/          # タスク指示（上位 → 下位）
-├── from/        # 報告（下位 → 上位）
+├── to/          # リーダーからメンバーへ
+├── from/        # メンバーからリーダー、メンバー間の連絡
 ├── inbox/       # 通知（append-only）
 ├── archive/     # 完了メッセージのアーカイブ
 └── reports/     # 定期レポート
@@ -98,6 +98,16 @@ relay/
 ./scripts/inbox_write.sh relay/inbox/<送信先>.yaml <自分> report relay/from/<自分>.yaml "完了"
 ```
 
+#### メンバー間で連絡する（横方向）
+
+```bash
+# 1. 連絡内容を書き込む
+./scripts/from_write.sh relay/from/<自分>.yaml <status> "連絡内容"
+
+# 2. 通知を送る
+./scripts/inbox_write.sh relay/inbox/<相手>.yaml <自分> message relay/from/<自分>.yaml "連絡"
+```
+
 #### メッセージを受信する
 
 ```bash
@@ -107,7 +117,7 @@ cat relay/inbox/<自分>.yaml
 # タスク詳細を読む
 cat relay/to/<自分>.yaml
 
-# 報告を読む
+# 報告、連絡を読む
 cat relay/from/<相手>.yaml
 ```
 
@@ -216,8 +226,9 @@ cat relay/from/member_2.yaml
 ### 役割
 
 - Leader からタスクを受け取り実装する
+- ユーザーからの指示で作業する場合もある
 - テストを書いて実行する
-- 完了したら報告する
+- 完了したら from/ に報告書で報告する（Leader 指示でもユーザー指示でも同じ）
 
 ### 報告ルール（重要）
 
@@ -239,13 +250,6 @@ cat relay/from/member_2.yaml
 **確認不要**: relay 操作、報告送信、ファイル編集
 
 **確認が必要**: 重要な決定、破壊的操作、ブロッカー発生、指示が不明確な場合
-
-### Leader がいない場合
-
-Leader がいない構成（2ペインなど）の場合：
-- ユーザーからの直接指示を受け取る
-- 完了したらユーザーに直接報告する
-- 他の Member と協力して作業を進める
 
 ### 通信例
 
