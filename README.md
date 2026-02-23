@@ -171,9 +171,9 @@ cp relay/from/member_5.yaml relay/from/member_6.yaml
 
 | Pane | Role |
 |------|------|
-| 0 | member_1 |
-| 1 | member_2 |
-| 2 | member_3 |
+| 0 | member_0 |
+| 1 | member_1 |
+| 2 | member_2 |
 | ... | ... |
 
 ### Leader (思考・タスク分配担当)

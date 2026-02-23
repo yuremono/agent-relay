@@ -1,12 +1,44 @@
-# プロジェクト CLAUDE.md（草案）
+**このファイルはCLAUDE.mdのサンプルです。プロジェクトに応じて書き換えるかファイル名を変更してご利用ください。**
+
+# プロジェクトルール
 
 このファイルは、Agent-Relay システムで動作する エージェント に読み込ませる指示書です。
+
+## 重要なルール
+
+###誤変換に注意
+ユーザーは音声入力を多用するため、誤変換が頻繁に発生します。
+文脈から適切と思われる単語に変換して回答してください。特に固有名詞について判断に迷う場合は回答を一時停止して正確な文字列を問い返してください。
+
+### よくある誤変換パターン
+| 誤変換 | 正しい語句 |
+|--------|-----------|
+| cloud.md | CLAUDE.md |
+| ご返還 | 誤変換 |
+
+### a11y（アクセシビリティ）
+- **a11yツリー（アクセシビリティツリー）** の考え方を採用
+- AIが理解しやすい属性（role, aria-*）を付与
+- 要素を「意味のある部品」として扱う
+
+```tsx
+// 例: a11y準拠の属性
+<div
+  data-id="blk_abc123"
+  data-type="heading"
+  role="heading"
+  aria-level="2"
+  aria-label="ヒーローセクションのメイン見出し"
+>
+  <h2>Multi Agent</h2>
+</div>
+```
 
 ---
 
 ## **Agent-Relay**システム概要
 
-**Agent-Relay** は、Cursor/VS Code 内で複数の Claude Code セッションが YAML ファイルを介して連携するシステムです。
+**Agent-Relay** は、Cursor/VS Code 内で複数の AIエージェントセッションが YAML ファイルを介して連携するシステムです。
 システムのルールに基づいて各エージェントは作業を行なってください。
 
 ### システム構成
@@ -24,8 +56,12 @@ Leader（調整役）
 
 ### 役割の自動割り当て
 
-- **Leader あり構成**: Pane 0 = Leader、Pane 1以降 = Member
-- **Leader なし構成**: 全ペイン = Member（ユーザー直接指示）
+| 構成 | Terminal 0 | Terminal 1 | Terminal 2 | Terminal 3 |
+|------|------------|------------|------------|------------|
+| **Leader あり（推奨）** | Leader | Member_1 | Member_2 | Member_3 |
+| **Leader なし** | Member_0 | Member_1 | Member_2 | Member_3 |
+
+**暗黙のルール**: Terminal Index = Member Index（Leader なしの場合は Member_0 から始まる）
 
 ---
 
@@ -35,8 +71,8 @@ Leader（調整役）
 
 ```
 relay/
-├── to/          # タスク指示（上位 → 下位）
-├── from/        # 報告（下位 → 上位）
+├── to/          # リーダーからメンバーへ
+├── from/        # メンバーからリーダー、メンバー間の連絡
 ├── inbox/       # 通知（append-only）
 ├── archive/     # 完了メッセージのアーカイブ
 └── reports/     # 定期レポート
@@ -64,6 +100,16 @@ relay/
 ./scripts/inbox_write.sh relay/inbox/<送信先>.yaml <自分> report relay/from/<自分>.yaml "完了"
 ```
 
+#### メンバー間で連絡する（横方向）
+
+```bash
+# 1. 連絡内容を書き込む
+./scripts/from_write.sh relay/from/<自分>.yaml <status> "連絡内容"
+
+# 2. 通知を送る
+./scripts/inbox_write.sh relay/inbox/<相手>.yaml <自分> message relay/from/<自分>.yaml "連絡"
+```
+
 #### メッセージを受信する
 
 ```bash
@@ -73,7 +119,7 @@ cat relay/inbox/<自分>.yaml
 # タスク詳細を読む
 cat relay/to/<自分>.yaml
 
-# 報告を読む
+# 報告、連絡を読む
 cat relay/from/<相手>.yaml
 ```
 
@@ -108,10 +154,7 @@ cat relay/from/<相手>.yaml
 
 1. 通知音が鳴る
 2. VS Code/Cursor がアクティベートされる（バックグラウンドの場合）
-3. Extension が `/chat` エンドポイントでメッセージを送信
-   - テキストを入力（Enter なし）
-   - 1秒待機
-   - Enter を送信（人間が入力したかのように見せる）
+3. ターミナルにメッセージが表示される
 
 通知を受け取ったら `cat relay/to/<自分>.yaml` でタスク詳細を確認してください。
 
@@ -135,6 +178,32 @@ cat relay/from/<相手>.yaml
 
 ---
 
+## システム起動時のスタンバイメッセージ
+
+このシステムは基本的にユーザー操作の** `relay-start` により送信されるスタンバイメッセージから始まります。**
+
+`relay-start` を実行すると、各ターミナルに以下のようなメッセージが自動的に送信されます：
+
+### Leader 用スタンバイメッセージ（Terminal 0）
+
+```
+ | Terminal Index: 0, Your role: leader. instructions/leader.md を読んでください。
+```
+
+### Member 用スタンバイメッセージ（Terminal 1, 2, ...）
+
+```
+ | Terminal Index: 1, Your role: member_1. instructions/member.md を読んでください。
+```
+
+※ Terminal Index はターミナルインデックスとメンバーインデックスが一致することを示します（Leader なし構成では Member_0 から始まります）。
+
+**重要**: スタンバイメッセージが届いたら、指定された指示書（instructions/leader.md または instructions/member.md）を読んでください。
+
+**スタンバイメッセージがない場合**: 何らかの理由でスタンバイメッセージが届いていない場合は、自分のターミナルインデックスを自分のメンバーインデックスと認識し、 `instructions/member.md` を読んでください。
+
+---
+
 ## Leader 特有の指示
 
 ### 役割
@@ -144,39 +213,9 @@ cat relay/from/<相手>.yaml
 - Member の成果を統合してユーザーに報告する
 - **技術的な判断はあなたの責任**
 
-### 重要：実作業は Member に任せる
+## 重要：実作業は Member に任せる
 
-**あなたは基本的に実作業を行いません。**
-
-理由：
-- ユーザーからの指示にいつでも対応できるよう、待機状態を保つ
-- Member が作業中でも、新たな指示に即座に対応できるようにする
-
-### タスクフロー
-
-```
-ユーザー -> Leader -> relay/to/member_*.yaml
-                        |
-                        v
-                    Member が実装
-                        |
-                        v
-          relay/from/member_*.yaml -> Leader -> ユーザーに報告
-```
-
-### 通信例
-
-```bash
-# Member_1 にタスクを送る
-./scripts/to_write.sh relay/to/member_1.yaml leader "auth.ts にJWT検証を実装" task
-./scripts/inbox_write.sh relay/inbox/member_1.yaml leader subtask relay/to/member_1.yaml "JWT検証"
-
-# Member からの報告を確認
-cat relay/from/member_1.yaml
-cat relay/from/member_2.yaml
-
-# 全員の完了を確認してからユーザーに報告
-```
+あなたは基本的に**実作業を Member に割り振り、自分は実装を行いません**。
 
 ---
 
@@ -185,15 +224,13 @@ cat relay/from/member_2.yaml
 ### 役割
 
 - Leader からタスクを受け取り実装する
+- ユーザーからの指示で作業する場合もある
 - テストを書いて実行する
-- 完了したら Leader に報告する
+- 完了したら from/ に報告書で報告する（Leader 指示でもユーザー指示でも同じ）
 
-### Leader がいない場合
+### 報告ルール（重要）
 
-Leader がいない構成（2ペインなど）の場合：
-- ユーザーからの直接指示を受け取る
-- 完了したらユーザーに直接報告する
-- 他の Member と協力して作業を進める
+ユーザー指示でも Leader 指示でも**完了時は必ず from/ に報告書を書いてください。**
 
 ### 通信例
 
@@ -207,14 +244,6 @@ cat relay/to/member_1.yaml
 ./scripts/inbox_write.sh relay/inbox/leader.yaml member_1 report relay/from/member_1.yaml "完了"
 ```
 
-### ブロッカー発生時
-
-```bash
-# 即座に報告
-./scripts/from_write.sh relay/from/member_1.yaml blocked "依存パッケージのバージョン競合"
-./scripts/inbox_write.sh relay/inbox/leader.yaml member_1 report relay/from/member_1.yaml "ブロック中"
-```
-
 ---
 
 ## 共通：コーディング規約
@@ -224,7 +253,19 @@ cat relay/to/member_1.yaml
 1. **テスト駆動 (TDD)**: 実装の前にテストを書く
 2. **セキュリティ第一**: セキュリティに関しては妥協しない
 3. **不変性 (Immutability)**: オブジェクトや配列を直接変更しない
-4. **対話言語**: 常に日本語で回答する。
+4. **対話言語**: 常に日本語で回答する
+5. **Read してから Write/Edit**: ファイルを編集する前に必ず内容を読む
+
+### 禁止事項（重要）
+
+- ❌ **調査・確認・検討段階でファイルを編集しない**
+  ユーザーの意図を読み取り、独断で実装に進まないでください。
+
+- ❌ **シークレット（APIキー、パスワード、トークン）をコードに直書きしない**
+  環境変数や設定ファイルを使用してください。
+
+- ❌ **未確認の削除・破壊的操作をしない**
+  ファイルの削除、ディレクトリのクリア、git reset --hard など、元に戻せない操作をする前には必ず確認してください。
 
 ### コードスタイル
 
@@ -245,14 +286,6 @@ try {
   throw new Error('ユーザーに分かりやすい詳細なメッセージ')
 }
 ```
-
----
-
-## 共通：ファイル操作ルール
-
-**常に Write/Edit の前に Read してください。**
-
-Claude Code は未読ファイルへの Write/Edit を拒否します。
 
 ---
 
@@ -292,3 +325,12 @@ cursor --install-extension terminal-relay-0.0.1.vsix
 
 - **Leader**: `templates/instructions/leader.md`
 - **Member**: `templates/instructions/member.md`
+
+
+## エージェントが作業するプロジェクトについて
+
+以下にこれから作成するプロジェクトについての説明を書いていきます。
+
+
+
+
