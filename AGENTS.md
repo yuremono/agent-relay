@@ -176,6 +176,32 @@ cat relay/from/<相手>.yaml
 
 ---
 
+## システム起動時のスタンバイメッセージ
+
+このシステムは基本的にユーザー操作の** `relay-start` により送信されるスタンバイメッセージから始まります。**
+
+`relay-start` を実行すると、各ターミナルに以下のようなメッセージが自動的に送信されます：
+
+### Leader 用スタンバイメッセージ（Terminal 0）
+
+```
+ | Terminal Index: 0, Your role: leader. instructions/leader.md を読んでください。
+```
+
+### Member 用スタンバイメッセージ（Terminal 1, 2, ...）
+
+```
+ | Terminal Index: 1, Your role: member_1. instructions/member.md を読んでください。
+```
+
+※ Terminal Index はターミナルインデックスとメンバーインデックスが一致することを示します（Leader なし構成では Member_0 から始まります）。
+
+**重要**: スタンバイメッセージが届いたら、指定された指示書（instructions/leader.md または instructions/member.md）を読んでください。
+
+**スタンバイメッセージがない場合**: 何らかの理由でスタンバイメッセージが届いていない場合は、自分のターミナルインデックスを自分のメンバーインデックスと認識し、 `instructions/member.md` を読んでください。
+
+---
+
 ## Leader 特有の指示
 
 ### 役割
@@ -185,39 +211,9 @@ cat relay/from/<相手>.yaml
 - Member の成果を統合してユーザーに報告する
 - **技術的な判断はあなたの責任**
 
-### 重要：実作業は Member に任せる
+## 重要：実作業は Member に任せる
 
-**あなたは基本的に実作業を行いません。**
-
-理由：
-- ユーザーからの指示にいつでも対応できるよう、待機状態を保つ
-- Member が作業中でも、新たな指示に即座に対応できるようにする
-
-### タスクフロー
-
-```
-ユーザー -> Leader -> relay/to/member_*.yaml
-                        |
-                        v
-                    Member が実装
-                        |
-                        v
-          relay/from/member_*.yaml -> Leader -> ユーザーに報告
-```
-
-### 通信例
-
-```bash
-# Member_1 にタスクを送る
-./scripts/to_write.sh relay/to/member_1.yaml leader "auth.ts にJWT検証を実装" task
-./scripts/inbox_write.sh relay/inbox/member_1.yaml leader subtask relay/to/member_1.yaml "JWT検証"
-
-# Member からの報告を確認
-cat relay/from/member_1.yaml
-cat relay/from/member_2.yaml
-
-# 全員の完了を確認してからユーザーに報告
-```
+あなたは基本的に**実作業を Member に割り振り、自分は実装を行いません**。
 
 ---
 
@@ -232,24 +228,7 @@ cat relay/from/member_2.yaml
 
 ### 報告ルール（重要）
 
-**完了時は必ず from/ に報告書を書いてください。**
-
-- ユーザー指示でも Leader 指示でも同じ
-- from/ は作業記録として残す場所
-- 書いた後、チャットで結果を伝える
-
-### タスク実行の原則
-
-**タスクは「受信 → 実行 → 報告」までを一連の流れとして完遂してください。**
-
-- 報告の前にユーザー確認を取る必要はありません
-- タスク完了と判断したら、即座に from/ に書いてチャットで伝えてください
-
-### ユーザー確認の要否
-
-**確認不要**: relay 操作、報告送信、ファイル編集
-
-**確認が必要**: 重要な決定、破壊的操作、ブロッカー発生、指示が不明確な場合
+ユーザー指示でも Leader 指示でも**完了時は必ず from/ に報告書を書いてください。**
 
 ### 通信例
 
@@ -261,14 +240,6 @@ cat relay/to/member_1.yaml
 # 完了報告
 ./scripts/from_write.sh relay/from/member_1.yaml completed "JWT検証を実装しました"
 ./scripts/inbox_write.sh relay/inbox/leader.yaml member_1 report relay/from/member_1.yaml "完了"
-```
-
-### ブロッカー発生時
-
-```bash
-# 即座に報告
-./scripts/from_write.sh relay/from/member_1.yaml blocked "依存パッケージのバージョン競合"
-./scripts/inbox_write.sh relay/inbox/leader.yaml member_1 report relay/from/member_1.yaml "ブロック中"
 ```
 
 ---
