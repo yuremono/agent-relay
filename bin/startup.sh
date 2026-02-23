@@ -69,7 +69,7 @@ if [[ "$FIRST_PANE_IS_LEADER" == "true" ]]; then
         ROLE_ARRAY+=("member_${i}")
     done
 else
-    for ((i=1; i<=TERMINAL_COUNT; i++)); do
+    for ((i=0; i<TERMINAL_COUNT; i++)); do
         ROLE_ARRAY+=("member_${i}")
     done
 fi

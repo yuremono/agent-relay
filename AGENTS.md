@@ -54,8 +54,12 @@ Leader（調整役）
 
 ### 役割の自動割り当て
 
-- **Leader あり構成**: Pane 0 = Leader、Pane 1以降 = Member
-- **Leader なし構成**: 全ペイン = Member（ユーザー直接指示）
+| 構成 | Terminal 0 | Terminal 1 | Terminal 2 | Terminal 3 |
+|------|------------|------------|------------|------------|
+| **Leader あり（推奨）** | Leader | Member_1 | Member_2 | Member_3 |
+| **Leader なし** | Member_0 | Member_1 | Member_2 | Member_3 |
+
+**暗黙のルール**: Terminal Index = Member Index（Leader なしの場合は Member_0 から始まる）
 
 ---
 
