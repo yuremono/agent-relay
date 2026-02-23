@@ -165,7 +165,7 @@ if curl -s --connect-timeout 2 http://localhost:3773 > /dev/null 2>&1; then
         fi
 
         # Send role message to terminal (on same line as index)
-        ROLE_MSG=" | Your role: ${role}. instructions/${INSTRUCTION_FILE} を読んでください。"
+        ROLE_MSG=" | Terminal Index: ${pane_index}, Your role: ${role}. instructions/${INSTRUCTION_FILE} を読んでください。"
         ENCODED_MSG=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${ROLE_MSG}'))")
         curl -s "http://localhost:3773/send?terminal=${pane_index}&text=${ENCODED_MSG}" > /dev/null 2>&1
         echo -e "  Terminal ${pane_index}: ${role} -> sent"
