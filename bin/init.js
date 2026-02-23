@@ -350,6 +350,26 @@ async function main() {
     log('yellow', '  CLAUDE_SAMPLE.md not found in package');
   }
 
+  // Copy AGENTS.md
+  log('green', '');
+  log('green', 'Copying AGENTS.md...');
+  const agentsFile = path.join(scriptDir, '..', 'AGENTS.md');
+  const destAgents = path.join(targetDir, 'AGENTS.md');
+  if (fs.existsSync(agentsFile)) {
+    if (fs.existsSync(destAgents) && !force) {
+      log('yellow', `  File exists (skip): ${destAgents}`);
+    } else {
+      if (dryRun) {
+        log('blue', `  Would copy: ${agentsFile} -> ${destAgents}`);
+      } else {
+        fs.copyFileSync(agentsFile, destAgents);
+        log('green', `  Copied: ${destAgents}`);
+      }
+    }
+  } else {
+    log('yellow', '  AGENTS.md not found in package');
+  }
+
   // Check for Extension
   log('green', '');
   log('green', 'Checking Terminal Relay Extension...');
