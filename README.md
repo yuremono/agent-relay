@@ -1,6 +1,7 @@
 # Agent-Relay
 
 Cursor/VS Code 内で完結する、複数の Claude Code /  Cursor CLI セッションが YAML ファイルを介して連携するシステム。
+
 ※ Cursor CLI に対応していますが、以下 Claude Code に統一させていただきます。
 
 ## 特徴
@@ -73,7 +74,9 @@ claude
 
 Claude Code を使用しない別のターミナルで実行：
 
-※Tarminal IndexはOSレベルで自動付与されます。Claude Codeを先に起動することで
+※Tarminal IndexはOSまたはアプリ毎に自動付与されます。(番号を変えることができません)
+
+Claude Codeを先に起動することで
 
 Terminal Index: 0,Terminal Index: 1,Terminal Index: 3,のように並び順通りの番号が付きます。
 
@@ -95,7 +98,7 @@ relay-init
 設定項目：
 - Pane 0 を leader にするかどうか（Y/n）
 
-※ ペイン数は自動検出されます。途中でターミナルを追加しても `relay-start` を再実行すれば自動的に反映されます。
+Terminal Index: 0 に対する初回メッセージに反映されます。
 
 ### 5. Extension をインストール
 
@@ -153,10 +156,7 @@ Terminal Index: 0 | Your role: leader. instructions/leader.md
 
 ### ペイン数の上限
 
-デフォルトで **Leader + Member 0〜5（計6ペイン）** の通信用ファイルが用意されています。
-
-- **Leader あり構成**: `leader`, `member_1`〜`member_5`
-- **Leader なし構成**: `member_0`〜`member_5`
+デフォルトで **Leader + Member 0〜5** の通信用ファイルが用意されています。
 
 6ペイン以上に拡張する場合は、`relay/` 配下の通信用ファイルを追加してください：
 
