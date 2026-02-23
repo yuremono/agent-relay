@@ -1,0 +1,36 @@
+README.md
+  f17b326d43b40dff 6-11,46-49,86-94,156-159,201-202,204,207-208,210,214-231,281,284
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "0232374ed37604c14fc038dda5b7fa2f39a439fd",
+  "prompts": {
+    "adf207cbfc4f4cf0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "49ca3fbc-5541-4f8b-a47e-9cddb40d852c",
+        "model": "glm-5"
+      },
+      "human_author": "yuremono <5alviaofficinali50@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 41,
+      "overriden_lines": 0
+    },
+    "f17b326d43b40dff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2cb410fc-a466-4fbc-9931-83c18eaf7e69",
+        "model": "glm-5"
+      },
+      "human_author": "yuremono <5alviaofficinali50@gmail.com>",
+      "messages": [],
+      "total_additions": 51,
+      "total_deletions": 7,
+      "accepted_lines": 51,
+      "overriden_lines": 0
+    }
+  }
+}
