@@ -1,0 +1,38 @@
+templates/instructions/member.md
+  f17b326d43b40dff 17-28,35-56,126,128
+AGENTS.md
+  f17b326d43b40dff 218-233
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "8d0ac9e306f4a2bc001e8575524b9d693fa75b27",
+  "prompts": {
+    "adf207cbfc4f4cf0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "49ca3fbc-5541-4f8b-a47e-9cddb40d852c",
+        "model": "glm-5"
+      },
+      "human_author": "yuremono <5alviaofficinali50@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 41,
+      "overriden_lines": 0
+    },
+    "f17b326d43b40dff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2cb410fc-a466-4fbc-9931-83c18eaf7e69",
+        "model": "glm-5"
+      },
+      "human_author": "yuremono <5alviaofficinali50@gmail.com>",
+      "messages": [],
+      "total_additions": 52,
+      "total_deletions": 1,
+      "accepted_lines": 52,
+      "overriden_lines": 0
+    }
+  }
+}
