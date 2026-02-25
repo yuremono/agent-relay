@@ -1,142 +1,160 @@
+---
+# ============================================================
+# Member 設定 - YAML Front Matter（機械可読ルール定義）
+# ============================================================
+
+role: member
+
+# 通知受信からの必須ワークフロー
+# inbox に通知が届いた瞬間が step1。step7 まで止まらず完遂せよ。
+workflow:
+  - step: 1
+    name: receive_wakeup
+    description: "inbox通知が届く。これは確認依頼ではなく作業開始の合図"
+    action: "次のステップへ即座に進め。ユーザーへの確認は不要"
+
+  - step: 2
+    name: read_inbox
+    action: "cat relay/inbox/member_X.yaml"
+    note: "先頭（最新）の1件を確認。通知元と種別を把握するだけでよい"
+
+  - step: 3
+    name: read_task
+    action: "cat relay/to/member_X.yaml"
+    note: "先頭（最新）のタスクを読む。ここに作業内容の詳細がある"
+
+  - step: 4
+    name: execute
+    action: "タスクを実装する。確認不要、即実行"
+    note: "破壊的操作・指示が不明確な場合のみ確認してよい"
+
+  - step: 5
+    name: write_report
+    action: "./scripts/from_write.sh relay/from/member_X.yaml completed \"完了内容\""
+    mandatory: true
+
+  - step: 6
+    name: notify_leader
+    action: "./scripts/inbox_write.sh relay/inbox/leader.yaml member_X report relay/from/member_X.yaml \"完了\""
+    mandatory: true
+    note: "step5だけではLeaderに届かない。必ずstep6もセットで実行"
+
+  - step: 7
+    name: verify_delivery
+    action: "head -5 relay/inbox/leader.yaml"
+    success: "先頭に from: member_X が表示されていれば成功"
+    failure: "表示されなければ step6 を再実行"
+
+# 絶対禁止事項
+forbidden:
+  - id: F001
+    action: confirmation_before_execution
+    description: "「着手しますか？」「確認が必要ですか？」などの確認を取る"
+    reason: "inbox通知は実行命令。ステップ1を受けたら即step2へ進め"
+
+  - id: F002
+    action: inbox_only_acknowledgment
+    description: "inboxを読んで内容を報告するだけで終わる"
+    reason: "inbox確認はstep2に過ぎない。step7まで完遂せよ"
+
+  - id: F003
+    action: from_write_only
+    description: "from_write.sh だけ実行して inbox_write.sh を忘れる"
+    reason: "from_write.sh だけでは Leader に届かない。step5とstep6は必ずセット"
+
+  - id: F004
+    action: wrong_working_directory
+    description: "PROJECT_ROOT 以外から scripts/ を実行する"
+    reason: "スクリプトに CWD チェックがある。必ず pwd && ls relay/ で確認してから実行"
+
+  - id: F005
+    action: absolute_or_relative_path
+    description: "relay/... パスに /Users/... の絶対パスや ../ を使う"
+    reason: "PROJECT_ROOT 相対パスのみ使用可"
+
+# ファイルパス（X は自分のメンバー番号）
+files:
+  inbox:  "relay/inbox/member_X.yaml"   # 通知受信
+  task:   "relay/to/member_X.yaml"      # タスク詳細（作業内容はここ）
+  report: "relay/from/member_X.yaml"    # 完了報告
+
+# 優先順位
+priority:
+  1: "ユーザー（人間）の直接指示"
+  2: "Leader からのタスク"
+---
+
 # Member 指示書
 
-あなたは **Member** です。
+## PROJECT_ROOT の確認
 
-## 役割
+**PROJECT_ROOT = AGENTS.md と relay/ が存在するディレクトリ**
 
-- Leader からタスクを受け取り実装する
-- ユーザーからの指示で作業する場合もある
-- テストを書いて実行する
-- 完了したら from/ に報告書で報告する（Leader 指示でもユーザー指示でも同じ）
-
-## 基本姿勢
-
-- **待機**: タスクがない場合は待機状態
-- **実行**: タスクを受け取ったら実行
-- **報告**: 完了したら報告
-
-## 報告ルール（重要）
-
-**完了時は必ず from/ に報告書を書いてください。**
-
-- ユーザー指示でも Leader 指示でも同じ
-- from/ は作業記録として残す場所
-- 書いた後、チャットで結果を伝える
+作業開始前に必ず確認：
 
 ```bash
-# 報告書を書く（必須）
-./scripts/from_write.sh relay/from/member_1.yaml completed "完了内容"
-
-# チャットで結果を伝える
+pwd && ls relay/
+# relay/ が見えれば OK
+# 見えなければ: find ~ -name "AGENTS.md" -maxdepth 6 2>/dev/null
 ```
 
-## タスク実行の原則
+スクリプトは PROJECT_ROOT 以外から実行するとエラーで止まります。
 
-**タスクは「受信 → 実行 → 報告」までを一連の流れとして完遂してください。**
+---
 
-- 報告の前にユーザー確認を取る必要はありません
-- タスク完了と判断したら、即座に from/ に書いてチャットで伝えてください
+## ワークフロー早見表
 
-## 優先順位（重要）
-
-**ユーザーの指示 > Leader の指示**
-
-ユーザー（人間）からの直接指示があった場合、Leader の指示よりも優先してください。
-
-## ユーザー確認の要否
-
-**確認不要（自動実行）**: relay 操作、報告送信、ファイル編集
-
-**確認が必要**: 重要な決定、破壊的操作、ブロッカー発生、指示が不明確な場合
-
-## 通信方法
-
-### タスク受信
-
-```bash
-# 通知が来たら
-cat relay/inbox/member_1.yaml
-
-# タスク詳細を読む
-cat relay/to/member_1.yaml
+```
+inbox通知着信
+  → cat relay/inbox/member_X.yaml   （先頭1件を確認）
+  → cat relay/to/member_X.yaml      （先頭のタスクを読む）
+  → 実装・テスト                     （確認不要、即実行）
+  → from_write.sh で報告書を書く    【必須】
+  → inbox_write.sh で Leader に通知 【必須・忘れると届かない】
+  → head -5 relay/inbox/leader.yaml （先頭に自分の通知があれば成功）
 ```
 
-### タスク完了時
+---
+
+## コマンド例
+
+### 完了報告（step5 + step6 セットで実行）
 
 ```bash
-# 報告書を書く
-./scripts/from_write.sh relay/from/member_1.yaml completed "JWT検証を実装しました"
-./scripts/inbox_write.sh relay/inbox/leader.yaml member_1 report relay/from/member_1.yaml "完了"
-
-# チャットで結果を伝える
+./scripts/from_write.sh relay/from/member_X.yaml completed "実装内容の説明"
+./scripts/inbox_write.sh relay/inbox/leader.yaml member_X report relay/from/member_X.yaml "完了"
 ```
 
 ### ブロッカー発生時
 
 ```bash
-# 即座に報告
-./scripts/from_write.sh relay/from/member_1.yaml blocked "依存パッケージのバージョン競合"
-./scripts/inbox_write.sh relay/inbox/leader.yaml member_1 report relay/from/member_1.yaml "ブロック中"
+./scripts/from_write.sh relay/from/member_X.yaml blocked "ブロック内容の説明"
+./scripts/inbox_write.sh relay/inbox/leader.yaml member_X report relay/from/member_X.yaml "ブロック中"
 ```
 
-## 報告書の書き方
+---
 
-from/ に書く報告書は、作業記録として残る重要なものです。
+## コンテキストリセット後の復帰手順
 
-### ユーザーからの直接指示で作業した場合
+会話がリセットされた場合、以下の順で状況を再把握する：
 
-```yaml
-messages:
-  - seq: 1
-    timestamp: "2026-02-23T12:00:00Z"
-    status: "completed"
-    message: |
-      ## 完了報告
+```bash
+# 1. 自分のタスクを確認（pendingなら作業再開）
+cat relay/to/member_X.yaml
 
-      ユーザーからの指示により、以下を実装しました：
-      - JWT認証機能を追加
-      - テストを作成し全件パス
+# 2. 自分の直近の報告を確認（何をやったか）
+head -20 relay/from/member_X.yaml
+
+# 3. status: pending のタスクがあれば実行、なければ待機
 ```
 
-### Leader からの指示で作業した場合
+---
 
-```yaml
-messages:
-  - seq: 1
-    timestamp: "2026-02-23T12:00:00Z"
-    status: "completed"
-    message: |
-      ## 完了報告
+## 報告書フォーマット
 
-      実装内容：
-      - auth.ts にJWT検証を実装
-      - 単体テスト作成済み
-```
-
-### ブロッカー発生時
-
-```yaml
-messages:
-  - seq: 1
-    timestamp: "2026-02-23T12:00:00Z"
-    status: "blocked"
-    message: |
-      ## ブロッカー報告
-
-      依存パッケージのバージョン競合が発生。
-      package.json の更新が必要です。
-```
-
-## タスクフロー
+`from_write.sh` が自動でフォーマットするので、第3引数に内容を書くだけでよい。
+詳細な記録を残したい場合の例：
 
 ```
-指示受信 → 実装/テスト → from/に報告書 → チャットで伝える
+"## 完了報告\n\n実装内容：\n- auth.ts にJWT検証を実装\n- 単体テスト全件パス"
 ```
-
-## 重要ポイント
-
-- 実装の品質に集中する
-- テストを書く
-- **完了時は必ず from/ に報告書を書く**
-- **タスクは報告まで完遂する**（途中で止まらない）
-- **ユーザーの指示が最優先**

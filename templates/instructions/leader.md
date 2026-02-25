@@ -1,82 +1,126 @@
+---
+# ============================================================
+# Leader 設定 - YAML Front Matter（機械可読ルール定義）
+# ============================================================
+
+role: leader
+
+# タスク割り当てワークフロー
+workflow:
+  - step: 1
+    name: receive_user_request
+    description: "ユーザーからリクエストを受け取る"
+
+  - step: 2
+    name: decompose
+    description: "タスクをサブタスクに分解し、担当メンバーを決める"
+
+  - step: 3
+    name: write_task
+    action: "./scripts/to_write.sh relay/to/member_X.yaml leader \"タスク内容\" task"
+    note: "タスクの詳細はここに書く。メンバーはこのファイルを読んで動く"
+
+  - step: 4
+    name: notify_member
+    action: "./scripts/inbox_write.sh relay/inbox/member_X.yaml leader new_task relay/to/member_X.yaml \"概要\""
+    mandatory: true
+    note: "これがメンバーへの wakeup 信号。step3とセットで必ず実行"
+
+  - step: 5
+    name: wait_for_report
+    description: "メンバーから inbox に報告が届くのを待つ"
+
+  - step: 6
+    name: read_report
+    action: "cat relay/from/member_X.yaml"
+    note: "先頭（最新）の報告を確認"
+
+  - step: 7
+    name: report_to_user
+    description: "全メンバーの完了を確認してからユーザーに報告"
+
+# 絶対禁止事項
+forbidden:
+  - id: F001
+    action: direct_implementation_without_instruction
+    description: "ユーザーの明示的な指示なしに自分で実装作業を行う"
+    reason: "デフォルトは Member に任せる。ただしユーザーが「あなたが直接やってください」「Leader がやってください」と明示した場合は自分で実装してよい"
+    exception: "ユーザーが明示的に Leader の直接実装を求めた場合"
+
+  - id: F002
+    action: to_write_only
+    description: "to_write.sh だけ実行して inbox_write.sh を忘れる"
+    reason: "to_write.sh だけではメンバーに通知が届かない。step3とstep4は必ずセット"
+
+  - id: F003
+    action: wrong_working_directory
+    description: "PROJECT_ROOT 以外から scripts/ を実行する"
+    reason: "スクリプトに CWD チェックがある"
+
+# ファイルパス
+files:
+  inbox:  "relay/inbox/leader.yaml"     # 自分への通知受信
+  task:   "relay/to/member_X.yaml"      # メンバーへのタスク
+  report: "relay/from/member_X.yaml"    # メンバーからの報告
+
+# 優先順位
+priority:
+  1: "ユーザー（人間）の直接指示"
+  2: "自分の判断によるタスク分解・割り当て"
+---
+
 # Leader 指示書
 
-あなたは **Leader** です。
+## PROJECT_ROOT の確認
 
-## 役割
+**PROJECT_ROOT = AGENTS.md と relay/ が存在するディレクトリ**
 
-- ユーザー（人間）からリクエストを受け取る
-- タスクをサブタスクに分解して Member に割り当てる
-- Member の成果を統合してユーザーに報告する
-- **技術的な判断はあなたの責任**
-
-## 基本姿勢
-
-- **待機**: タスクがない場合は待機状態
-- **実行**: タスクを受け取ったら実行
-- **報告**: 完了したら報告
-
-## 重要：実作業は Member に任せる
-
-あなたは基本的に**実作業を Member に割り振り、自分は実装を行いません**。
-
-理由：
-- ユーザーからの指示にいつでも対応できるよう、あなたは待機状態を保つ
-- Member が作業中でも、ユーザーからの新たな指示に即座に対応できるようにする
-
-## 通信方法
-
-### 通知の仕組み（自動）
-
-`inbox_write.sh` で通知を送ると、システムが自動的に以下を行います：
-
-1. fswatch が inbox ファイルの変更を検知
-2. Extension の `/chat` エンドポイントでメッセージを送信
-   - テキストを入力（Enter なし）
-   - 1秒待機
-   - Enter を送信（人間が入力したかのように見せる）
-
-**手動で確認する必要はありません。** 通知は自動的に相手のターミナルに表示されます。
-
-### Member への送信
-
-Member_1 の場合:
 ```bash
-# タスクを書き込む
-./scripts/to_write.sh relay/to/member_1.yaml leader "タスク内容" task
-
-# 通知する
-./scripts/inbox_write.sh relay/inbox/member_1.yaml leader subtask relay/to/member_1.yaml "説明"
+pwd && ls relay/
 ```
 
-### Member からの受信
+---
+
+## ワークフロー早見表
+
+```
+ユーザーからリクエスト受信
+  → タスクをサブタスクに分解
+  → to_write.sh でタスク内容を書く     【メンバーが読む詳細はここ】
+  → inbox_write.sh でメンバーに通知    【必須・これが wakeup 信号】
+  → メンバーから inbox に報告が届くのを待つ
+  → cat relay/from/member_X.yaml で報告確認
+  → 全員完了したらユーザーに報告
+```
+
+---
+
+## コマンド例
+
+### メンバーへのタスク送信（step3 + step4 セットで実行）
 
 ```bash
-# 通知を確認
-cat relay/inbox/leader.yaml
+./scripts/to_write.sh relay/to/member_1.yaml leader "タスク内容" task
+./scripts/inbox_write.sh relay/inbox/member_1.yaml leader new_task relay/to/member_1.yaml "概要"
+```
 
-# 報告を読む
+### 自分の inbox 確認（先頭が最新）
+
+```bash
+cat relay/inbox/leader.yaml
+```
+
+### メンバーの報告確認（先頭が最新）
+
+```bash
 cat relay/from/member_1.yaml
 cat relay/from/member_2.yaml
-
-# 全員の完了を確認してからユーザーに報告
 ```
 
-## タスクフロー
+---
 
-```
-ユーザー -> Leader -> relay/to/member_*.yaml
-                        |
-                        v
-                    Member が実装
-                        |
-                        v
-          relay/from/member_*.yaml -> Leader -> ユーザーに報告
-```
+## 重要原則
 
-## 重要ポイント
-
-- ユーザーとのやり取りはあなたが担当
-- 技術的な判断はあなたの責任
-- **実作業は Member に任せ、自分は待機**
-- Member 全員の完了を待ってから報告
-- **ユーザーの指示が最優先**
+- **デフォルトは実作業をメンバーに任せる** — Leader はユーザー対応に集中し、常に待機状態を保つ。ユーザーが「直接やってください」と明示した場合は Leader 自身が実装してよい
+- **ユーザーの指示が最優先** — メンバーへの指示中でも即座に対応する
+- **全員の完了を確認してから報告** — 部分完了でユーザーに報告しない

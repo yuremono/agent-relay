@@ -1,12 +1,61 @@
 **このファイルはCLAUDE.mdのサンプルです。プロジェクトに応じて書き換えるかファイル名を変更してご利用ください。**
-
 # プロジェクトルール
 
 このファイルは、Agent-Relay システムで動作する エージェント に読み込ませる指示書です。
 
+---
+
+## 【最重要】プロジェクトルートとパス構造
+
+**このファイル（AGENTS.md）が存在するディレクトリが PROJECT_ROOT です。**
+
+作業を始める前に必ず自分のプロジェクトルートを確認してください：
+
+```bash
+# PROJECT_ROOT を確認する方法
+# このファイル(AGENTS.md)を探す
+find ~ -name "AGENTS.md" -maxdepth 6 2>/dev/null | head -3
+
+# または AGENTS.md の場所が分かっているなら
+ls <AGENTS.mdがある場所>/relay/   # relay/ があれば そこが PROJECT_ROOT
+```
+
+PROJECT_ROOT が確認できたら、以下の構造を基準にしてください：
+
+| 役割 | PROJECT_ROOT からの相対パス |
+|------|---------------------------|
+| リレー通信ディレクトリ | `relay/` |
+| 自分のインボックス | `relay/inbox/<自分>.yaml` |
+| 自分の報告ファイル | `relay/from/<自分>.yaml` |
+| タスクファイル | `relay/to/<自分>.yaml` |
+| リレースクリプト | `scripts/` |
+| 指示書 | `instructions/` |
+| AIシステム本体 | `packages/` |
+| AIシステムDB | `data/database.json` |
+| AIシステム設定 | `config/` |
+| AIシステム起動スクリプト | `scripts/start.sh` など |
+
+### スクリプト実行の鉄則
+
+リレースクリプトは**必ず PROJECT_ROOT から**実行してください：
+
+```bash
+# まず PROJECT_ROOT に移動
+cd <PROJECT_ROOT>
+
+# 正しい実行例
+./scripts/inbox_write.sh relay/inbox/leader.yaml <from> <type> <file> "<message>"
+./scripts/from_write.sh relay/from/member_1.yaml completed "<報告内容>"
+```
+
+`packages/` や `config/` など他のサブディレクトリの中からリレースクリプトを実行してはいけません。
+実行するとエラーで止まります（ディレクトリチェックが入っています）。
+
+---
+
 ## 重要なルール
 
-### 誤変換に注意
+###誤変換に注意
 ユーザーは音声入力を多用するため、誤変換が頻繁に発生します。
 文脈から適切と思われる単語に変換して回答してください。特に固有名詞について判断に迷う場合は回答を一時停止して正確な文字列を問い返してください。
 
@@ -73,7 +122,7 @@ Leader（調整役）
 relay/
 ├── to/          # リーダーからメンバーへ
 ├── from/        # メンバーからリーダー、メンバー間の連絡
-├── inbox/       # 通知（append-only）
+├── inbox/       # 通知（先頭追加・最新が先頭）
 ├── archive/     # 完了メッセージのアーカイブ
 └── reports/     # 定期レポート
 ```
@@ -213,9 +262,9 @@ cat relay/from/<相手>.yaml
 - Member の成果を統合してユーザーに報告する
 - **技術的な判断はあなたの責任**
 
-## 重要：実作業は Member に任せる
+## 重要：実作業は原則 Member に任せる
 
-あなたは基本的に**実作業を Member に割り振り、自分は実装を行いません**。
+あなたは基本的に**実作業を Member に割り振ります**。ただし、ユーザーが「あなたが直接やってください」「Leader がやってください」と明示した場合は自分で実装してよいです。
 
 ---
 
@@ -323,8 +372,8 @@ cursor --install-extension terminal-relay-0.0.1.vsix
 
 詳細な役割定義は以下を参照してください：
 
-- **Leader**: `templates/instructions/leader.md`
-- **Member**: `templates/instructions/member.md`
+- **Leader**: `instructions/leader.md`
+- **Member**: `instructions/member.md`
 
 
 ## エージェントが作業するプロジェクトについて
